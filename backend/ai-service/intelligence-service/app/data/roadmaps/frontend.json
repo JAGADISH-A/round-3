@@ -1,0 +1,25 @@
+{
+  "name": "Frontend Developer",
+  "phases": [
+    {
+      "phase": "Foundations",
+      "skills": ["HTML", "CSS", "JavaScript Basics", "Git", "Terminal"]
+    },
+    {
+      "phase": "Advanced CSS & Modern JS",
+      "skills": ["Flexbox/Grid", "Responsive Design", "ES6+", "npm/yarn"]
+    },
+    {
+      "phase": "Framework Enthusiast",
+      "skills": ["React", "Next.js", "Tailwind CSS", "State Management"]
+    },
+    {
+      "phase": "Testing & Deployment",
+      "skills": ["Jest", "React Testing Library", "Vercel/Netlify", "CI/CD Basics"]
+    },
+    {
+      "phase": "Advanced Frontend",
+      "skills": ["TypeScript", "Performance Optimization", "Web Vitals", "PWA"]
+    }
+  ]
+}

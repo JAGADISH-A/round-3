@@ -1,0 +1,25 @@
+{
+  "name": "DevOps Engineer",
+  "phases": [
+    {
+      "phase": "Foundations",
+      "skills": ["Linux Fundamentals", "Networking", "Bash Scripting", "Python", "Git"]
+    },
+    {
+      "phase": "Containers & Orchestration",
+      "skills": ["Docker", "Container Runtimes", "Kubernetes", "Helm"]
+    },
+    {
+      "phase": "Infrastructure as Code",
+      "skills": ["Terraform", "Ansible", "CloudFormation", "Packer"]
+    },
+    {
+      "phase": "CI/CD & Automation",
+      "skills": ["Jenkins", "GitHub Actions", "GitLab CI", "CircleCI"]
+    },
+    {
+      "phase": "Monitoring & Logging",
+      "skills": ["Prometheus", "Grafana", "ELK Stack", "Alertmanager"]
+    }
+  ]
+}

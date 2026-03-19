@@ -1,0 +1,32 @@
+{
+  "personas": [
+    {
+      "id": "career_coach",
+      "name": "Career Coach"
+    },
+    {
+      "id": "programming_tutor",
+      "name": "Programming Tutor"
+    },
+    {
+      "id": "technical_interviewer",
+      "name": "Technical Interviewer"
+    },
+    {
+      "id": "soft_skill_tutor",
+      "name": "Soft Skill Tutor"
+    },
+    {
+      "id": "resume_reviewer",
+      "name": "Resume Reviewer"
+    },
+    {
+      "id": "voice_reviewer",
+      "name": "Voice Reviewer"
+    },
+    {
+      "id": "face_reviewer",
+      "name": "Face Reviewer"
+    }
+  ]
+}

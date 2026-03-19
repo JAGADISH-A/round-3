@@ -1,0 +1,19 @@
+{
+  "models": [
+    {
+      "id": "llama33",
+      "name": "Llama 3.3",
+      "provider": "groq"
+    },
+    {
+      "id": "deepseek",
+      "name": "DeepSeek Coder",
+      "provider": "deepseek"
+    },
+    {
+      "id": "gpt4o",
+      "name": "GPT-4o",
+      "provider": "openai"
+    }
+  ]
+}

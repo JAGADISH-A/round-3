@@ -1,0 +1,25 @@
+{
+  "name": "Backend Developer",
+  "phases": [
+    {
+      "phase": "Foundations",
+      "skills": ["Python", "Java", "Go", "Git", "HTTP/HTTPS", "Basic SQL"]
+    },
+    {
+      "phase": "Databases & Storage",
+      "skills": ["PostgreSQL", "MongoDB", "Redis", "Database Design", "ORM/ODM"]
+    },
+    {
+      "phase": "API Development",
+      "skills": ["REST APIs", "GraphQL", "FastAPI", "Spring Boot", "Authentication/JWT"]
+    },
+    {
+      "phase": "Scalability & Cloud",
+      "skills": ["Docker", "Kubernetes", "AWS/GCP/Azure", "Microservices"]
+    },
+    {
+      "phase": "Testing & Security",
+      "skills": ["Unit Testing", "Integration Testing", "OWASP Basics", "Secure Coding"]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+*.swp
+
+# --- IDE Files ---
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --- Node/Next.js (Frontend) ---
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# --- Java/Maven (Backend Gateway) ---
+backend/gateway/target/
+backend/gateway/bin/
+backend/gateway/build/
+backend/gateway/.settings/
+backend/gateway/.project
+backend/gateway/.classpath
+
+# --- Python (AI Services) ---
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/.pytest_cache/
+**/.venv/
+**/venv/
+**/env/
+**/virtualenv/
+backend/ai-service/intelligence-service/.env
+backend/ai-service/vision-service/.env
+backend/ai-service/intelligence-service/chroma_db/
+backend/ai-service/intelligence-service/dataset/
+backend/ai-service/intelligence-service/pip_list*.txt
+
+# --- Project Specific Data ---
+careerspark_data_external/
+verify_output.txt
+verify_*.py
+
+# --- Env Files (General) ---
+.env
+.env.*
+!.env.example
