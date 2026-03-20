@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { History, Paperclip, MessageSquare, ChevronLeft, Trash2, Plus } from "lucide-react";
+import { History, Bot, Paperclip, MessageSquare, ChevronLeft, Trash2, Plus, FileText, Video, Map } from "lucide-react";
 import { 
   ChatInput, 
   ChatInputTextArea, 
@@ -13,6 +13,8 @@ import { ENDPOINTS } from "@/lib/api-config";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { getLatestMetrics } from "@/lib/vision-store";
+import Image from "next/image";
+import { motion } from "framer-motion";
 
 interface Message {
   role: "user" | "ai";
@@ -237,7 +239,7 @@ Provide helpful interview coaching feedback.`;
   const activeConv = conversations.find(c => c.id === activeId);
 
   return (
-    <Suspense fallback={<div className="h-full w-full flex items-center justify-center bg-black text-[#00E6A8] font-mono text-xs uppercase tracking-widest">Initializing AI Coach...</div>}>
+    <Suspense fallback={<div className="h-full w-full flex items-center justify-center bg-black text-[#FFD600] font-mono text-xs uppercase tracking-widest">Initializing AI...</div>}>
       <ChatContentWrapper 
         conversations={conversations}
         activeId={activeId}
@@ -345,14 +347,14 @@ function ChatContent({
               className={cn(
                 "w-full text-left px-3 py-3 rounded-xl transition-all group flex items-start justify-between gap-2",
                 conv.id === activeId
-                  ? "bg-[#00E6A8]/10 border border-[#00E6A8]/20"
+                  ? "bg-[#FFD600]/10 border border-[#FFD600]/20"
                   : "hover:bg-white/5 border border-transparent"
               )}
             >
               <div className="min-w-0 flex-1">
                 <p className={cn(
                   "text-[11px] font-bold truncate leading-tight",
-                  conv.id === activeId ? "text-[#00E6A8]" : "text-zinc-300"
+                  conv.id === activeId ? "text-[#FFD600]" : "text-zinc-300"
                 )}>
                   {conv.title}
                 </p>
@@ -374,15 +376,18 @@ function ChatContent({
       <div className="flex flex-col h-full flex-1">
 
         {/* Header */}
-        <header className="h-[64px] border-b border-white/5 flex items-center justify-between px-6 bg-black/50 backdrop-blur-xl shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#00E6A8]/10 border border-[#00E6A8]/20 flex items-center justify-center">
-              <MessageSquare className="w-4 h-4 text-[#00E6A8]" />
-            </div>
-            <div>
-              <h2 className="text-sm font-black uppercase tracking-wider">AI Career Coach</h2>
+        <header className="h-[64px] border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md shrink-0 py-2">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(255,214,0,0.1)]">
+            <Bot className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Hive Intelligence Active</span>
             </div>
           </div>
+        </div>
           <div className="flex items-center gap-2 relative">
             <button
               onClick={newConversation}
@@ -395,7 +400,7 @@ function ChatContent({
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all",
                 showHistory
-                  ? "bg-[#00E6A8]/10 border-[#00E6A8]/30 text-[#00E6A8]"
+                  ? "bg-[#FFD600]/10 border-[#FFD600]/30 text-[#FFD600]"
                   : "bg-white/5 border-white/8 text-zinc-500 hover:text-white hover:bg-white/10"
               )}
             >
@@ -408,33 +413,73 @@ function ChatContent({
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-6 py-8 space-y-6 custom-scrollbar">
           {messages.length === 0 && !isThinking && (
-            <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto">
-              <div className="w-16 h-16 rounded-2xl bg-[#00E6A8]/5 border-2 border-[#00E6A8]/20 flex items-center justify-center mb-5">
-                <MessageSquare className="w-8 h-8 text-[#00E6A8]/60" />
-              </div>
-              <h3 className="text-xl font-black uppercase tracking-tight mb-2">Coaching Mode Active</h3>
-              <p className="text-xs text-zinc-600 leading-relaxed font-mono">
-                Ask about interview prep, roadmaps, technical concepts, or soft skills. Specialized personas are ready to mentor you.
+            <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto px-4">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="w-24 h-24 mb-10 relative group"
+              >
+                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <Image 
+                  src="/logo.png" 
+                  alt="BumbleBee" 
+                  width={96} 
+                  height={96} 
+                  className="relative z-10 transition-transform duration-500 group-hover:scale-110" 
+                />
+              </motion.div>
+              
+              <h3 className="text-5xl font-bebas tracking-widest mb-4 text-white uppercase italic">
+                How can the <span className="text-primary">Hive</span> help you today?
+              </h3>
+              <p className="text-zinc-500 text-sm max-w-md mb-12 font-medium tracking-wide">
+                Ask anything about careers, interviews, resumes, or learning paths.
               </p>
+
+              {/* Suggestion Chips */}
+              <div className="flex flex-wrap items-center justify-center gap-3 w-full">
+                {[
+                  "Improve my resume",
+                  "Mock interview tips",
+                  "Career roadmap",
+                ].map((label, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSend(
+                      localStorage.getItem("careerspark_model") || "llama33",
+                      "career_coach",
+                      localStorage.getItem("careerspark_tone") || "friendly",
+                      label
+                    )}
+                    className="flex items-center px-6 py-2.5 rounded-full bg-[#111111] border border-white/5 text-zinc-400 hover:text-white hover:bg-primary/10 hover:border-primary/30 transition-all duration-300 text-xs font-bold tracking-wide hover:scale-105"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {messages.map((msg: any, i: number) => (
-            <div key={i} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
-              <div className={cn(
-                "max-w-[78%] px-5 py-4 text-sm leading-relaxed border-2",
-                msg.role === "user"
-                  ? "bg-zinc-950 border-white/8 text-white rounded-2xl rounded-br-sm"
-                  : "bg-[#050505] border-[#00E6A8]/15 text-zinc-200 rounded-2xl rounded-bl-sm"
-              )}>
-                {/* Neo-brutalist label */}
-                <div className={cn(
-                  "text-[8px] font-black uppercase tracking-widest mb-2",
-                  msg.role === "user" ? "text-zinc-700" : "text-[#00E6A8]/50"
-                )}>
-                  {msg.role === "user" ? "You" : (
-                    <span className="flex items-center gap-2">
-                      {msg.persona || "CareerCoach AI"}
+            <div key={i}
+                className={cn(
+                  "flex flex-col gap-2 max-w-[85%] md:max-w-[75%]",
+                  msg.role === "user" ? "items-end ml-auto" : "items-start mr-auto"
+                )}
+              >
+                <div
+                  className={cn(
+                    "px-5 py-3 rounded-[24px] text-sm leading-relaxed",
+                    msg.role === "user"
+                      ? "bg-primary text-black font-medium rounded-tr-none shadow-[0_4px_15px_rgba(255,214,0,0.1)]"
+                      : "bg-zinc-900 text-zinc-200 border border-white/5 rounded-tl-none"
+                  )}
+                >
+                  {/* Metadata for AI messages */}
+                  {msg.role !== "user" && (
+                    <div className="text-[9px] font-black uppercase tracking-widest mb-1.5 text-zinc-400 flex items-center gap-2">
+                      <span>{msg.persona || "AI Career Coach"}</span>
                       {msg.tone && (
                         <>
                           <span className="opacity-20">•</span>
@@ -447,24 +492,23 @@ function ChatContent({
                           <span className="opacity-30 text-[7px]">{msg.model}</span>
                         </>
                       )}
-                    </span>
+                    </div>
                   )}
+                  <div className="whitespace-pre-wrap font-sans text-[14px] leading-7">{msg.content}</div>
+                  <div className="mt-2 text-[9px] font-mono opacity-25">{msg.timestamp}</div>
                 </div>
-                <div className="whitespace-pre-wrap font-mono text-[13px] leading-6">{msg.content}</div>
-                <div className="mt-2 text-[9px] font-mono opacity-25">{msg.timestamp}</div>
               </div>
-            </div>
           ))}
 
           {isThinking && (
             <div className="flex items-start">
-              <div className="px-5 py-4 bg-[#050505] border-2 border-[#00E6A8]/15 rounded-2xl rounded-bl-sm flex items-center gap-3">
-                <div className="flex gap-1">
-                  <div className="w-1.5 h-1.5 bg-[#00E6A8] rounded-full animate-bounce [animation-duration:0.7s]" />
-                  <div className="w-1.5 h-1.5 bg-[#00E6A8] rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.15s]" />
-                  <div className="w-1.5 h-1.5 bg-[#00E6A8] rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.3s]" />
+              <div className="px-5 py-4 bg-[#0a0a0a] border border-[#FFD600]/10 rounded-2xl rounded-bl-sm flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s]" />
+                  <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.15s]" />
+                  <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.3s]" />
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#00E6A8]/60">AI is thinking...</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#FFD600]/60">Hive is thinking...</span>
               </div>
             </div>
           )}

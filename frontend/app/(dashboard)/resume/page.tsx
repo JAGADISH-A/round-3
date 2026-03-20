@@ -56,9 +56,9 @@ export default function ResumePage() {
 
   return (
     <div className="h-full flex flex-col bg-[#050505] text-white overflow-hidden">
-      <header className="h-[72px] border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md shrink-0">
+      <header className="h-[64px] border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#00E6A8]/10 border border-[#00E6A8]/20 flex items-center justify-center text-[#00E6A8]">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
             <Award className="w-5 h-5" />
           </div>
           <div>
@@ -81,14 +81,14 @@ export default function ResumePage() {
                 sessionStorage.setItem("careerspark_analysis_context", JSON.stringify(context));
                 window.location.href = "/chat?persona=resume_reviewer";
               }}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00E6A8] text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(0,230,168,0.2)]"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,214,0,0.2)]"
             >
               <MessageSquare className="w-3 h-3" />
               Discuss Resume with AI
             </button>
-            <div className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#00E6A8]/5 border border-[#00E6A8]/10">
+            <div className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/5 border border-primary/10">
               <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Target Role</span>
-              <span className="text-[10px] font-bold text-[#00E6A8] uppercase tracking-wider">{normalizedAnalysis.confirmed_role}</span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{normalizedAnalysis.confirmed_role}</span>
             </div>
           </div>
         )}
@@ -99,6 +99,9 @@ export default function ResumePage() {
           
           {/* Upload Section */}
           <section className={cn("transition-all duration-700", analysis ? "opacity-100" : "opacity-100")}>
+            <div className="mb-6 text-center">
+              <p className="text-zinc-500 text-xs font-medium">Upload your PDF resume to get an instant AI-powered performance analysis.</p>
+            </div>
             <ResumeUpload onAnalysisComplete={(data) => setAnalysis(data)} />
           </section>
 
@@ -108,7 +111,7 @@ export default function ResumePage() {
               {/* Radar Performance Chart */}
               <div className="lg:col-span-8 liquid-glass p-10 rounded-[48px] border border-white/5 relative overflow-hidden min-h-[500px]">
                 <div className="absolute top-10 left-10">
-                  <h3 className="text-3xl font-bebas tracking-wider uppercase mb-1 italic">Skill Performance <span className="text-[#00E6A8]">Radar</span></h3>
+                  <h3 className="text-3xl font-bebas tracking-wider uppercase mb-1 italic">Skill Performance <span className="text-primary">Radar</span></h3>
                   <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.2em]">Cross-Referenced Performance Metrics</p>
                 </div>
                 
@@ -120,14 +123,14 @@ export default function ResumePage() {
                       <Radar
                         name="Candidate"
                         dataKey="A"
-                        stroke="#00E6A8"
-                        fill="#00E6A8"
-                        fillOpacity={0.1}
+                        stroke="#FFD600"
+                        fill="#FFD600"
+                        fillOpacity={0.15}
                         strokeWidth={2}
                       />
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#09090b', borderColor: '#ffffff10', borderRadius: '16px' }}
-                        itemStyle={{ color: '#00E6A8' }}
+                        itemStyle={{ color: '#FFD600' }}
                       />
                     </RadarChart>
                   </ResponsiveContainer>
@@ -153,12 +156,12 @@ export default function ResumePage() {
                   </div>
 
                   <div className="space-y-5">
-                    <h4 className="text-[11px] font-black uppercase text-[#00E6A8] tracking-[0.2em] flex items-center gap-2">
+                    <h4 className="text-[11px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" /> Growth Keywords
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {normalizedAnalysis.keyword_suggestions.map((word: string, i: number) => (
-                        <span key={i} className="px-3 py-2 bg-[#00E6A8]/5 border border-[#00E6A8]/10 rounded-xl text-xs text-[#00E6A8]/50 font-medium">
+                        <span key={i} className="px-3 py-2 bg-primary/5 border border-primary/10 rounded-xl text-xs text-primary/50 font-medium hover:scale-105 transition-transform cursor-default">
                           {word}
                         </span>
                       ))}
@@ -170,29 +173,29 @@ export default function ResumePage() {
               {/* Optimization Protocol - Full Width */}
               <div className="lg:col-span-12 liquid-glass p-12 rounded-[56px] border border-white/5 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 group-hover:scale-[1.6] transition-transform duration-1000">
-                    <HistoryIcon className="w-64 h-64 text-[#00E6A8]" />
+                    <HistoryIcon className="w-64 h-64 text-primary" />
                   </div>
                   
                   <div className="relative z-10">
                     <div className="flex items-center gap-4 mb-10">
-                      <div className="w-12 h-12 rounded-3xl bg-[#00E6A8]/10 border border-[#00E6A8]/20 flex items-center justify-center text-[#00E6A8]">
+                      <div className="w-12 h-12 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                         <BrainCircuit className="w-6 h-6" />
                       </div>
                       <div>
-                        <h3 className="text-3xl font-bebas tracking-wide uppercase">Optimization <span className="text-[#00E6A8]">Protocol</span></h3>
+                        <h3 className="text-3xl font-bebas tracking-wide uppercase">Optimization <span className="text-primary">Protocol</span></h3>
                         <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.3em]">Actionable Profile Enhancements</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {normalizedAnalysis.improvement_checklist.slice(0, 4).map((item: any, i: number) => (
-                        <div key={i} className="p-6 bg-black/40 border border-white/5 rounded-3xl group/item hover:border-[#00E6A8]/20 transition-all">
+                        <div key={i} className="p-6 bg-black/40 border border-white/5 rounded-3xl group/item hover:border-primary/20 transition-all">
                           <div className="flex items-center justify-between mb-4">
                             <span className={cn(
                               "text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest",
                               item.priority === "High" ? "bg-red-500/10 text-red-500" :
                               item.priority === "Medium" ? "bg-amber-500/10 text-amber-500" :
-                              "bg-[#00E6A8]/10 text-[#00E6A8]"
+                              "bg-primary/10 text-primary"
                             )}>
                               {item.priority}
                             </span>

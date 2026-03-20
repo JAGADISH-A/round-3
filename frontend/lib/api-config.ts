@@ -3,7 +3,7 @@
 // AI Service (Python): Port 8000 (direct)
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"; 
-export const VISION_BASE_URL = process.env.NEXT_PUBLIC_VISION_API_URL || "http://localhost:8002";
+export const VISION_BASE_URL = process.env.NEXT_PUBLIC_VISION_URL || "http://localhost:8002";
 
 export const ENDPOINTS = {
   HEALTH: `${API_BASE_URL}/health`,

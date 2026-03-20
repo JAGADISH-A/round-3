@@ -48,6 +48,7 @@ export default function VoicePage() {
   const [sessionHistory, setSessionHistory] = useState<InterviewSession[]>([]);
   const [userRole, setUserRole] = useState<string>("default");
   const [currentQuestion, setCurrentQuestion] = useState<string>("");
+  const [skillFocus, setSkillFocus] = useState<"technical" | "behavioral">("technical");
 
   // Refs for Audio Waveform
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -136,7 +137,7 @@ export default function VoicePage() {
       let x = 0;
       for (let i = 0; i < bufferLength; i++) {
         const barHeight = (dataArray[i] / 255) * canvas.height;
-        ctx.fillStyle = `rgba(0, 230, 168, ${dataArray[i] / 255 + 0.1})`;
+        ctx.fillStyle = `rgba(255, 214, 0, ${dataArray[i] / 255 + 0.1})`;
         ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
         x += barWidth + 1;
       }
@@ -291,9 +292,9 @@ export default function VoicePage() {
 
   return (
     <div className="h-full flex flex-col bg-[#050505] text-white overflow-hidden">
-      <header className="h-[72px] border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md shrink-0">
+      <header className="h-[64px] border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#00E6A8]/10 border border-[#00E6A8]/20 flex items-center justify-center text-[#00E6A8]">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
             <Activity className="w-5 h-5" />
           </div>
           <div>
@@ -317,7 +318,7 @@ export default function VoicePage() {
                   sessionStorage.setItem("careerspark_analysis_context", JSON.stringify(context));
                   window.location.href = "/chat?persona=voice_reviewer";
                 }}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00E6A8] text-black text-[9px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(0,230,168,0.2)]"
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-black text-[9px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,214,0,0.2)]"
               >
                 <MessageSquare className="w-3 h-3" />
                 Discuss Voice Feedback
@@ -340,62 +341,66 @@ export default function VoicePage() {
                 }}
               className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
             >
-                <TrendingUp className="w-3 h-3 text-[#00E6A8]" />
+                <TrendingUp className="w-3 h-3 text-primary" />
                 Improve Communication
               </button>
             </div>
           )}
           <div className="flex flex-col items-end">
              <span className="text-[9px] uppercase text-zinc-500 font-bold">Persistence</span>
-             <span className="text-[10px] text-[#00E6A8] font-mono">Session History Active</span>
+             <span className="text-[10px] text-primary font-mono">Session History Active</span>
           </div>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
           
-          {/* Main Control Panel */}
-          <div className="lg:col-span-4 space-y-6">
+          {/* Main Control Panel (1 fraction) */}
+          <div className="w-full lg:w-[40%] space-y-6">
             
             {/* Role & Focus Selector */}
-            <div className="liquid-glass p-6 rounded-[24px] border border-white/5 space-y-4">
+            <div className="liquid-glass p-6 rounded-[24px] border border-white/5 space-y-6">
               <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-zinc-400">
-                <BrainCircuit className="w-3.5 h-3.5 text-[#00E6A8]" /> Practice Config
+                <BrainCircuit className="w-3.5 h-3.5 text-primary" /> Practice Config
               </h4>
               
-              <div className="space-y-3">
+              <div className="space-y-6">
                 <div>
-                  <label className="text-[9px] uppercase text-zinc-600 font-bold block mb-1.5">Career Role</label>
+                  <label className="text-[9px] uppercase text-zinc-600 font-bold block mb-2 tracking-wider">Career Role</label>
                   <select
                     value={userRole}
                     onChange={(e) => { setUserRole(e.target.value); refreshQuestion(e.target.value); }}
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold appearance-none hover:border-[#00E6A8]/30 transition-colors focus:outline-none focus:ring-1 focus:ring-[#00E6A8]/50"
+                    className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold appearance-none hover:border-primary/30 transition-all focus:outline-none focus:ring-1 focus:ring-primary/50 cursor-pointer"
                   >
-                    {availableRoles.map(r => <option key={r} value={r}>{ROLE_DISPLAY_MAP[r]}</option>)}
+                    {availableRoles.map(r => <option key={r} value={r} className="bg-zinc-900">{ROLE_DISPLAY_MAP[r]}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-[9px] uppercase text-zinc-600 font-bold block mb-1.5">Skill Focus</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <label className="text-[9px] uppercase text-zinc-600 font-bold block mb-2 tracking-wider">Skill Focus</label>
+                  <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => { setUserRole(userRole); refreshQuestion(userRole); }}
+                      onClick={() => { setSkillFocus("technical"); refreshQuestion(userRole); }}
                       className={cn(
-                        "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
-                        "bg-[#00E6A8]/10 border-[#00E6A8]/30 text-[#00E6A8]"
+                        "py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border transform hover:scale-[1.02] active:scale-95",
+                        skillFocus === "technical" 
+                          ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(255,214,0,0.2)]"
+                          : "bg-black/40 border-white/10 text-zinc-500 hover:text-white hover:border-white/20"
                       )}
                     >
-                      <BrainCircuit className="w-3 h-3 inline mr-1.5" /> Technical
+                      <BrainCircuit className="w-3.5 h-3.5 inline mr-1.5" /> Technical
                     </button>
                     <button
-                      onClick={() => refreshQuestion(userRole)}
+                      onClick={() => { setSkillFocus("behavioral"); refreshQuestion(userRole); }}
                       className={cn(
-                        "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
-                        "bg-black/20 border-white/5 text-zinc-600 hover:text-zinc-400"
+                        "py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border transform hover:scale-[1.02] active:scale-95",
+                        skillFocus === "behavioral"
+                          ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(255,214,0,0.2)]"
+                          : "bg-black/40 border-white/10 text-zinc-500 hover:text-white hover:border-white/20"
                       )}
                     >
-                      <Users className="w-3 h-3 inline mr-1.5" /> Behavioral
+                      <Users className="w-3.5 h-3.5 inline mr-1.5" /> Behavioral
                     </button>
                   </div>
                 </div>
@@ -410,8 +415,8 @@ export default function VoicePage() {
               
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-2xl font-bebas tracking-wider">Practice Session</h3>
-                <button onClick={() => cycleQuestion(userRole)} title="Shuffle question" className="p-2 rounded-xl bg-white/5 hover:bg-[#00E6A8]/10 transition-all">
-                  <Shuffle className="w-4 h-4 text-zinc-500 hover:text-[#00E6A8]" />
+                <button onClick={() => cycleQuestion(userRole)} title="Shuffle question" className="p-2 rounded-xl bg-white/5 hover:bg-primary/10 transition-all">
+                  <Shuffle className="w-4 h-4 text-zinc-500 hover:text-primary" />
                 </button>
               </div>
               <p className="text-sm text-zinc-400 mb-8 leading-relaxed">
@@ -423,7 +428,7 @@ export default function VoicePage() {
                 <canvas ref={canvasRef} className="w-full h-full" width={400} height={100} />
                 {status === "idle" && <Volume2 className="w-8 h-8 text-zinc-800 opacity-20" />}
                 {status === "analyzing" && (
-                    <div className="flex items-center gap-3 text-[#00E6A8] animate-pulse">
+                    <div className="flex items-center gap-3 text-primary animate-pulse">
                         <Loader2 className="w-6 h-6 animate-spin" />
                         <span className="text-[10px] font-bold uppercase tracking-widest">Processing...</span>
                     </div>
@@ -433,19 +438,19 @@ export default function VoicePage() {
               {status === "idle" || status === "done" || status === "error" ? (
                 <button 
                   onClick={startRecording}
-                  className="w-full py-4 bg-[#00E6A8] text-black font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all"
+                  className="w-full py-4 bg-primary text-black font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,214,0,0.2)]"
                 >
                   <Play className="w-5 h-5 fill-current" /> Start Practice
                 </button>
               ) : status === "recording" ? (
                 <button 
                   onClick={stopRecording}
-                  className="w-full py-4 bg-red-500 text-white font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3 animate-pulse"
+                  className="w-full py-4 bg-red-600 text-white font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3 animate-pulse hover:bg-red-700 transition-colors"
                 >
                   <Square className="w-5 h-5 fill-current" /> Stop & Analyze
                 </button>
               ) : (
-                <div className="w-full py-4 bg-zinc-800 text-zinc-400 font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3">
+                <div className="w-full py-4 bg-zinc-900 border border-white/5 text-zinc-400 font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3">
                   <Loader2 className="w-5 h-5 animate-spin" /> Analyzing Voice...
                 </div>
               )}
@@ -457,7 +462,7 @@ export default function VoicePage() {
             <div className="liquid-glass p-6 rounded-[24px] border border-white/5">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                  <History className="w-3 h-3 text-[#00E6A8]" /> Session History
+                  <History className="w-3 h-3 text-primary" /> Session History
                 </h4>
                 <button 
                     onClick={() => { clearSessions(); setSessionHistory([]); }}
@@ -472,7 +477,7 @@ export default function VoicePage() {
                     key={i} 
                     title={`Readiness: ${h.readiness}%`}
                     style={{ height: `${h.readiness ?? 0}%` }} 
-                    className="flex-1 bg-[#00E6A8]/10 hover:bg-[#00E6A8]/30 border-t border-[#00E6A8]/40 rounded-t-lg transition-colors cursor-help"
+                    className="flex-1 bg-primary/10 hover:bg-primary/30 border-t border-primary/40 rounded-t-lg transition-colors cursor-help"
                   />
                 ))}
                 {sessionHistory.length === 0 && (
@@ -485,15 +490,21 @@ export default function VoicePage() {
           </div>
 
 
-          {/* Analysis Results Display */}
-          <div className="lg:col-span-8 space-y-6">
+          {/* Analysis Results Display (1.5 fraction) */}
+          <div className="w-full lg:w-[60%] space-y-6">
             {!metrics && status !== "analyzing" && (
-              <div className="h-full min-h-[500px] border-2 border-dashed border-white/5 rounded-[40px] flex flex-col items-center justify-center text-zinc-600 group hover:border-[#00E6A8]/10 transition-colors">
-                <div className="w-20 h-20 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Volume2 className="w-10 h-10 opacity-20" />
+              <div className="h-full min-h-[500px] bg-black/40 border-2 border-dashed border-white/5 rounded-[40px] flex flex-col items-center justify-center text-zinc-600 group hover:border-primary/10 transition-all duration-500">
+                <div className="relative w-24 h-24 mb-6">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-20" />
+                  <div className="relative w-24 h-24 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_30px_rgba(255,214,0,0.05)]">
+                    <Volume2 className="w-10 h-10 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </div>
-                <p className="text-xs uppercase tracking-[0.3em] font-black">Waiting for Vocal Signal</p>
-                <p className="text-[10px] text-zinc-800 italic mt-2 font-mono">Microphone must be authorized</p>
+                <p className="text-sm uppercase tracking-[0.3em] font-black group-hover:text-zinc-400 transition-colors">Waiting for Vocal Signal</p>
+                <div className="flex items-center gap-2 mt-3 opacity-40 group-hover:opacity-100 transition-all">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <p className="text-[10px] text-zinc-500 italic font-mono uppercase tracking-widest">Neural Link Offline</p>
+                </div>
               </div>
             )}
 
@@ -517,7 +528,7 @@ export default function VoicePage() {
 
                 {/* Score Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <ScoreCard label="Readiness" value={normalizedMetrics.readiness_score} icon={<Award/>} color="#00E6A8" />
+                  <ScoreCard label="Readiness" value={normalizedMetrics.readiness_score} icon={<Award/>} color="#FFD600" />
                   <ScoreCard label="Professionalism" value={normalizedMetrics.professionalism_score} icon={<ShieldCheck className="w-4 h-4" />} color="#3b82f6" />
                   <ScoreCard label="Structure" value={normalizedMetrics.sentence_structure} icon={<BrainCircuit/>} color="#8b5cf6" />
                   <ScoreCard label="Content" value={normalizedMetrics.content_quality === "Excellent" ? 100 : (normalizedMetrics.content_quality === "Good" ? 75 : 40)} icon={<Award/>} color="#f59e0b" customValue={normalizedMetrics.content_quality} />
@@ -526,12 +537,12 @@ export default function VoicePage() {
                 {/* Dashboard Main Area */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-2 bg-[#0A0A0A] border border-white/5 p-10 rounded-[40px] space-y-8 relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#00E6A8]/5 blur-[80px] rounded-full" />
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 blur-[80px] rounded-full" />
                     
                     <div className="flex items-center justify-between">
                       <h3 className="text-2xl font-bebas tracking-wide">Speech Analytics Report</h3>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-[#00E6A8] animate-pulse" />
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         <span className="text-[9px] font-black uppercase text-zinc-400">Gemini 1.5 Pro Analysis</span>
                       </div>
                     </div>
@@ -544,28 +555,28 @@ export default function VoicePage() {
                       </div>
 
                     <div className="grid grid-cols-3 gap-4">
-                      <div className="p-5 bg-black/60 rounded-3xl border border-white/5 hover:border-[#00E6A8]/20 transition-colors">
+                      <div className="p-5 bg-black/60 rounded-3xl border border-white/5 hover:border-primary/20 transition-colors">
                         <span className="block text-[10px] uppercase text-zinc-500 mb-2">Pacing</span>
                         <div className="text-2xl font-black">{normalizedMetrics.words_per_minute} <span className="text-[10px] text-zinc-600 font-mono">WPM</span></div>
                         <span className="text-[9px] text-zinc-600">Words/Min</span>
                       </div>
-                      <div className="p-5 bg-black/60 rounded-3xl border border-white/5 hover:border-[#00E6A8]/20 transition-colors">
+                      <div className="p-5 bg-black/60 rounded-3xl border border-white/5 hover:border-primary/20 transition-colors">
                         <span className="block text-[10px] uppercase text-zinc-500 mb-2">Fillers</span>
                         <div className="text-2xl font-black">{normalizedMetrics.filler_words} <span className="text-[10px] text-zinc-600 font-mono italic">
                           {normalizedMetrics.filler_list?.[0] || "None"}
                         </span></div>
                         <span className="text-[9px] text-zinc-600">Primary Filler</span>
                       </div>
-                      <div className="p-5 bg-black/60 rounded-3xl border border-white/5 hover:border-[#00E6A8]/20 transition-colors">
+                      <div className="p-5 bg-black/60 rounded-3xl border border-white/5 hover:border-primary/20 transition-colors">
                         <span className="block text-[10px] uppercase text-zinc-500 mb-2">Content</span>
-                        <div className="text-xl font-black uppercase text-[#00E6A8]">{normalizedMetrics.content_quality}</div>
+                        <div className="text-xl font-black uppercase text-primary">{normalizedMetrics.content_quality}</div>
                         <span className="text-[9px] text-zinc-600">Quality Level</span>
                       </div>
                     </div>
 
-                    <div className="p-6 bg-[#00E6A8]/5 border border-[#00E6A8]/10 rounded-3xl flex gap-5 items-start">
-                      <div className="w-10 h-10 rounded-2xl bg-[#00E6A8]/10 flex items-center justify-center shrink-0">
-                         <TrendingUp className="w-5 h-5 text-[#00E6A8]" />
+                    <div className="p-6 bg-primary/5 border border-primary/10 rounded-3xl flex gap-5 items-start">
+                      <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                         <TrendingUp className="w-5 h-5 text-primary" />
                       </div>
                       <div>
                         <span className="block text-[10px] uppercase text-zinc-400 mb-1 font-black">AI Interview Coach Feedback</span>

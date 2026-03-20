@@ -16,25 +16,34 @@ from app.api.models import router as models_router
 from app.api.personas import router as personas_router
 from app.api.chat import router as mcp_chat_router
 
-app = FastAPI(title="CareerSpark AI", version="1.0.0")
+app = FastAPI(title="BumbleBee AI Intelligence", version="1.0.0")
 
-class PrepRequest(BaseModel):
-    role: str
-
-class RoadmapRequest(BaseModel):
-    role: str
-    resume_analysis: dict | None = None
-
-class ReportRequest(BaseModel):
-    data: dict
+# Standardized CORS for BumbleBee AI Hive
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+def health():
+    try:
+        return {
+            "status": "ok",
+            "service": "intelligence",
+            "port": 8001,
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
 
 
 class ChatMessage(BaseModel):
@@ -67,9 +76,17 @@ class IntelligenceRequest(BaseModel):
     target_role: str | None = None
 
 
-@app.get("/health")
-def health():
-    return {"status": "AI Intelligence Service Running"}
+class PrepRequest(BaseModel):
+    role: str
+
+
+class RoadmapRequest(BaseModel):
+    role: str
+    resume_analysis: dict | None = None
+
+
+class ReportRequest(BaseModel):
+    data: dict
 
 
 @app.get("/collections")
@@ -199,6 +216,5 @@ def developer_report(request: ReportRequest):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8001))
-    service_type = "Vision AI Service" if port == 8002 else "RAG AI Service"
-    print(f"\n{service_type} started on port {port}")
-    uvicorn.run(app, host="127.0.0.1", port=port)
+    print(f"\n\033[92m✅ Intelligence Service running on port {port}\033[0m")
+    uvicorn.run(app, host="0.0.0.0", port=port)

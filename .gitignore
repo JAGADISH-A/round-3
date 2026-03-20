@@ -2,12 +2,19 @@
 .DS_Store
 Thumbs.db
 *.swp
+*.bak
+*.tmp
+*.log
 
 # --- IDE Files ---
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
+.project
+.classpath
+.settings/
+.factorypath
 
 # --- Node/Next.js (Frontend) ---
 frontend/node_modules/
@@ -30,6 +37,7 @@ backend/gateway/.project
 backend/gateway/.classpath
 
 # --- Python (AI Services) ---
+**/*-env/
 **/__pycache__/
 **/*.py[cod]
 **/*$py.class

@@ -16,7 +16,8 @@ export function ConnectivityGuard() {
     // Check Intelligence Service
     try {
       const res = await fetch(ENDPOINTS.HEALTH, { cache: "no-store" });
-      if (res.ok) setIntelligenceStatus("online");
+      const data = await res.json();
+      if (res.ok && data.status === "ok") setIntelligenceStatus("online");
       else setIntelligenceStatus("offline");
     } catch {
       setIntelligenceStatus("offline");
@@ -25,7 +26,8 @@ export function ConnectivityGuard() {
     // Check Vision Service
     try {
       const res = await fetch(ENDPOINTS.VISION_HEALTH, { cache: "no-store" });
-      if (res.ok) setVisionStatus("online");
+      const data = await res.json();
+      if (res.ok && data.status === "ok") setVisionStatus("online");
       else setVisionStatus("offline");
     } catch {
       setVisionStatus("offline");
@@ -42,16 +44,16 @@ export function ConnectivityGuard() {
     <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 animate-in slide-in-from-right-10 duration-500">
       {intelligenceStatus !== "online" && (
         <StatusCard 
-          title="AI Intelligence Offline"
-          message="Core brain unreachable on port 8001"
+          title="Intelligence Offline"
+          message="AI Logic (8001) is unreachable. Check Python terminal."
           onRetry={checkConnectivity}
           status={intelligenceStatus}
         />
       )}
       {visionStatus !== "online" && (
         <StatusCard 
-          title="Vision Service Offline"
-          message="Facial Analysis unavailable on port 8002"
+          title="Vision Offline"
+          message="Interview Analysis (8002) is unreachable. Check Python terminal."
           onRetry={checkConnectivity}
           status={visionStatus}
         />

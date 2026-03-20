@@ -1,111 +1,70 @@
-# CareerSpark AI 🚀
+# 🐝 BumbleBee AI | Your Intelligent Career Ecosystem
 
-CareerSpark AI is a comprehensive career intelligence platform designed to help users with interview coaching, resume analysis, and career guidance. It combines the power of Java Spring Boot, Python FastAPI with LLMs (Groq, Gemini), and a modern Next.js frontend.
+BumbleBee AI is a next-generation career readiness platform designed to empower students and professionals through advanced AI-driven tools. From resume optimization to real-time interview simulations, BumbleBee AI provides a cohesive, premium experience for the modern job market.
 
-## 🏗️ Architecture Overview
+![BumbleBee Logo](logo.png)
 
-The project is structured as a multi-service architecture for scalability and modularity:
+## 🚀 Key Features
 
-- **Frontend (Next.js)**: A responsive chat-based dashboard for user interactions.
-- **Java Gateway (Spring Boot)**: Acts as the central entry point and proxy for AI services.
-- **Intelligence Service (Python/FastAPI)**: Handles RAG, resume analysis, and chat logic using LangChain and Groq.
-- **Vision Service (Python/FastAPI)**: Specialized in video/image analysis for interview coaching (Mediapipe, OpenCV).
+- **💬 The Hive (AI Chat)**: A sophisticated career coach capable of roadmapping, skill gap analysis, and personalized advice.
+- **🎙️ Voice Pro Analyzer**: Real-time interview simulation with instant vocal analytics (WPM, fillers, confidence) and AI feedback.
+- **📄 Resume Intelligence**: Deep-scan resume analysis with ATS scoring, impact evaluation, and target-role tuning.
+- **🛡️ Secure Auth**: Robust authentication powered by Firebase.
+- **☸️ Multi-Model Intelligence**: Orchestrated power using Groq (Llama 3), Google Gemini 1.5 Pro, and custom vision models.
 
----
+## 🏗️ Architecture
+
+BumbleBee AI utilizes a high-performance hybrid architecture:
+- **Frontend**: Next.js 14 (App Router) with Tailwind CSS.
+- **Intelligence Service**: Python FastAPI / LangChain (Port 8001).
+- **Vision AI Service**: Python FastAPI / Custom Face & Eye Tracking (Port 8002).
+- **Gateway**: Java Spring Boot (Optional orchestration).
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 14, React, Tailwind CSS, TypeScript.
-- **Microservices**: Python 3.10+, FastAPI, Java 17, Spring Boot 3.
-- **AI/ML**: LangChain, Groq (Llama-3), Google Gemini, ChromaDB, SentenceTransformers.
-- **Tools**: Maven, NPM, Pip.
+- **Frameworks**: Next.js, FastAPI, Spring Boot
+- **AI/ML**: LangChain, Groq, Gemini API, MediaPipe
+- **Security**: Firebase Auth
+- **UI/UX**: Tailwind CSS, Framer Motion, Lucide Icons
 
----
-
-## 📂 Project Structure
-
-```plaintext
-nm/
-├── frontend/                  # Next.js Frontend
-│   ├── app/                   # Next.js App Router
-│   ├── components/            # UI Components
-│   └── .env.example           # Frontend Env Template
-├── backend/
-│   ├── gateway/               # Java Spring Boot Proxy
-│   │   └── src/main/java      # Java Source Code
-│   └── ai-service/
-│       ├── intelligence-service/ # Chat & RAG logic
-│       │   ├── main.py
-│       │   ├── requirements.txt
-│       │   └── .env.example
-│       └── vision-service/       # Video/Image analysis
-│           ├── main.py
-│           ├── requirements.txt
-│           └── .env.example
-├── .gitignore                 # Consolidated git ignore rules
-└── README.md                  # Project Documentation
-```
-
----
-
-## 🚀 Getting Started
+## ⚙️ Local Setup
 
 ### 1. Prerequisites
-- **Java 17** & **Maven**
-- **Python 3.10+**
-- **Node.js 18+**
+- Node.js 20+
+- Python 3.10+
+- Java 17+ (for Gateway)
 
-### 2. Setup Services
+### 2. Environment Configuration
+Copy the `.env.example` files to `.env` in their respective directories and fill in your API keys:
+- `frontend/.env.local`
+- `backend/ai-service/intelligence-service/.env`
+- `backend/ai-service/vision-service/.env`
 
-#### Intelligence Service (RAG)
-```bash
-cd backend/ai-service/intelligence-service
-python -m venv venv
-# Windows: venv\Scripts\activate | Linux: source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env # Add your API keys!
-python main.py
-```
+### 3. Installation & Run
 
-#### Vision Service (AI Feedback)
-```bash
-cd backend/ai-service/vision-service
-python -m venv venv
-# Windows: venv\Scripts\activate | Linux: source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env # Add your API keys!
-python main.py
-```
-
-#### Java Gateway
-```bash
-cd backend/gateway
-mvn spring-boot:run
-```
-
-#### Frontend Dashboard
+#### **Frontend**
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local
 npm run dev
 ```
 
+#### **Intelligence Service**
+```bash
+cd backend/ai-service/intelligence-service
+pip install -r requirements.txt
+python main.py
+```
+
+#### **Vision Service**
+```bash
+cd backend/ai-service/vision-service
+pip install -r requirements.txt
+python main.py
+```
+
+## 📜 License
+This project is for educational and career-readiness purposes.
+
 ---
-
-## 🌐 Deployment Guidelines
-
-### Frontend (Vercel)
-- Connect your GitHub repo to Vercel.
-- Set Root Directory to `frontend`.
-- Add `NEXT_PUBLIC_API_URL` to Vercel Environment Variables (Point it to your deployed Gateway or Backend).
-
-### Backend (Render / AWS)
-- **Render**: Create "Web Service" for each component (`gateway` requires a Java environment, AI services require Python).
-- **AWS**: Use **App Runner** for FastAPI services and **Elastic Beanstalk** (or ECS) for the Java Gateway.
-- Ensure all Environment Variables from `.env.example` are added to the deployment platform's dashboard.
-
----
-
-## 🛡️ Security Note
-This repository uses `.gitignore` to prevent sensitive credentials (`.env`, `venv`, `node_modules`, `target`) from being pushed. Always use the provided `.env.example` templates for configuration.
+*Built with ❤️ by the BumbleBee AI Team.*

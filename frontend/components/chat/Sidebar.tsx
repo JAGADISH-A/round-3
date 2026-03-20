@@ -3,152 +3,164 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { 
+  MessageSquare, 
   FileText, 
+  Video, 
+  BookOpen, 
   Map, 
-  User,
-  Mic2,
-  MessageSquare,
-  LayoutDashboard,
+  User as UserIcon, 
+  LogOut, 
+  ChevronLeft, 
   ChevronRight,
-  ChevronLeft,
-  Power,
-  Camera,
-  LucideIcon
+  Globe
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import LogoutModal from "@/components/auth/LogoutModal";
 
-interface NavItem {
-  label: string;
-  icon: LucideIcon;
-  href: string;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "AI Coach", icon: MessageSquare, href: "/chat" },
-  { label: "Intelligence", icon: LayoutDashboard, href: "/intelligence" },
-  { label: "Roadmap", icon: Map, href: "/roadmap" },
-  { label: "Resume Builder", icon: FileText, href: "/resume" },
-  { label: "Voice Practice", icon: Mic2, href: "/voice" },
-  { label: "Face Analysis", icon: Camera, href: "/face-analysis" },
-  { label: "Profile", icon: User, href: "/profile" },
+const menuItems = [
+  { icon: MessageSquare, label: "Chat", href: "/chat" },
+  { icon: FileText, label: "Resume Analyzer", href: "/resume" },
+  { icon: Video, label: "Interview Simulator", href: "/voice" },
+  { icon: BookOpen, label: "Study Hub", href: "/study", placeholder: true },
+  { icon: Map, label: "Roadmap", href: "/roadmap", placeholder: true },
 ];
 
 export default function Sidebar() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [language, setLanguage] = useState<"EN" | "TM">("EN");
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const pathname = usePathname();
-  const [expanded, setExpanded] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
-    <aside
-      className={cn(
-        "h-screen bg-[#050505] border-r border-white/5 flex flex-col py-6 shrink-0 z-50 transition-all duration-300",
-        expanded ? "w-[200px] items-start" : "w-[72px] items-center"
-      )}
-    >
-      {/* Logo + expand toggle */}
-      <div className={cn("mb-10 flex items-center", expanded ? "px-4 w-full justify-between" : "justify-center")}>
-        <Link href="/" className="group relative flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#00E6A8] rounded-xl flex items-center justify-center font-black text-black text-xs shadow-[0_0_20px_rgba(0,230,168,0.3)] transition-transform group-hover:scale-110 shrink-0">
-            CS
+    <>
+      <aside 
+        className={cn(
+          "h-screen bg-zinc-950 border-r border-white/5 flex flex-col transition-all duration-500 ease-in-out relative z-20 shadow-2xl",
+          isCollapsed ? "w-16" : "w-64"
+        )}
+      >
+        {/* Toggle Button */}
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-10 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-black hover:scale-110 transition-transform shadow-lg shadow-primary/20"
+        >
+          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
+
+        {/* Header / Logo */}
+        <div className="p-6 flex items-center gap-3 overflow-hidden">
+          <div className="relative w-8 h-8 flex-shrink-0">
+            <Image src="/logo.png" alt="BumbleBee Logo" fill className="object-contain" />
           </div>
-          {expanded && (
-            <span className="text-white font-black text-sm uppercase tracking-widest whitespace-nowrap">
-              CareerSpark
+          {!isCollapsed && (
+            <span className="text-2xl font-bebas tracking-[0.2em] text-primary whitespace-nowrap italic">
+              BumbleBee <span className="text-white">AI</span>
             </span>
           )}
-        </Link>
-
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className={cn(
-            "w-7 h-7 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 transition-all",
-            !expanded && "mt-0"
-          )}
-          title={expanded ? "Collapse sidebar" : "Expand sidebar"}
-        >
-          {expanded ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-        </button>
-      </div>
-
-      {/* Nav Items */}
-      <nav className={cn("flex-1 flex flex-col gap-1 w-full", expanded ? "px-3" : "items-center px-0")}>
-        {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative w-full",
-                isActive
-                  ? "bg-[#00E6A8]/10 text-[#00E6A8]"
-                  : "text-zinc-500 hover:text-white hover:bg-white/5",
-                !expanded && "justify-center"
-              )}
-            >
-              {/* Active bar */}
-              {isActive && (
-                <div className="absolute -left-[3px] top-1/4 bottom-1/4 w-[3px] bg-[#00E6A8] rounded-r-full shadow-[0_0_10px_#00E6A8]" />
-              )}
-
-              <item.icon className={cn(
-                "w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110",
-                isActive ? "text-[#00E6A8]" : "text-zinc-500 group-hover:text-white"
-              )} />
-
-              {/* Label – shown when expanded */}
-              {expanded && (
-                <span className={cn(
-                  "text-[11px] font-bold uppercase tracking-wider whitespace-nowrap",
-                  isActive ? "text-[#00E6A8]" : "text-zinc-500 group-hover:text-white"
-                )}>
-                  {item.label}
-                </span>
-              )}
-
-              {/* Tooltip – shown when collapsed */}
-              {!expanded && (
-                <div className="absolute left-full ml-4 px-3 py-1.5 bg-zinc-900 border border-white/10 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-xl">
-                  {item.label}
-                </div>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* User identity footer */}
-      <div className={cn("mt-auto w-full", expanded ? "px-3" : "flex justify-center")}>
-        <div className={cn(
-          "group relative flex items-center gap-3 cursor-pointer",
-          expanded ? "px-3 py-2.5 rounded-xl hover:bg-white/5 transition-all w-full" : "p-2"
-        )}>
-          <div className="w-8 h-8 rounded-full border-2 border-[#00E6A8]/30 group-hover:border-[#00E6A8] transition-colors shrink-0 flex items-center justify-center bg-zinc-900 text-[9px] font-black text-[#00E6A8]">
-            JS
-          </div>
-          {expanded && (
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black text-white">Jagan S.</p>
-              <p className="text-[9px] text-[#00E6A8] uppercase tracking-wider">Identity Active</p>
-            </div>
-          )}
-          {expanded && (
-            <Power className="w-3.5 h-3.5 text-red-500/60 hover:text-red-400 transition-colors shrink-0" />
-          )}
-
-          {/* Tooltip when collapsed */}
-          {!expanded && (
-            <div className="absolute left-full ml-4 px-3 py-2.5 bg-zinc-900 border border-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 min-w-[160px] shadow-xl">
-              <p className="text-[10px] font-black text-white">Identity Active</p>
-              <p className="text-[9px] text-zinc-500 mb-2">Jagan S.</p>
-              <div className="h-[1px] bg-white/5 my-1.5" />
-              <p className="text-[9px] text-red-500 font-black uppercase tracking-wider flex items-center gap-1.5">
-                <Power className="w-2.5 h-2.5" /> Terminate Session
-              </p>
-            </div>
-          )}
         </div>
-      </div>
-    </aside>
+
+        {/* Language Toggle UI */}
+        {!isCollapsed && (
+          <div className="px-6 mb-6">
+            <div className="bg-black/50 p-1 rounded-xl border border-white/5 flex items-center justify-between">
+              <button 
+                onClick={() => setLanguage("EN")}
+                className={cn("px-3 py-1.5 text-xs font-bold rounded-lg transition-all", language === "EN" ? "bg-primary text-black" : "text-zinc-500 hover:text-white")}
+              >
+                EN
+              </button>
+              <button 
+                onClick={() => setLanguage("TM")}
+                className={cn("px-3 py-1.5 text-xs font-bold rounded-lg transition-all", language === "TM" ? "bg-primary text-black" : "text-zinc-500 hover:text-white")}
+              >
+                TM
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 space-y-2 py-4 custom-scrollbar overflow-y-auto">
+          {menuItems.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.placeholder ? "#" : item.href}
+                title={isCollapsed ? item.label : undefined}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative border",
+                  isActive 
+                    ? "bg-primary/15 text-primary border-primary/40 shadow-[0_0_15px_rgba(255,214,0,0.1)]" 
+                    : "text-zinc-500 hover:text-white hover:bg-white/5 border-transparent",
+                  isCollapsed && "justify-center px-0",
+                  item.placeholder && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <item.icon size={18} className={cn("flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3", isActive ? "text-primary" : "text-primary")} />
+                {!isCollapsed && (
+                  <span className="font-bold text-sm tracking-wide">{item.label}</span>
+                )}
+                {item.placeholder && !isCollapsed && (
+                  <span className="absolute right-4 text-[8px] font-black bg-zinc-800 px-1.5 py-0.5 rounded uppercase tracking-tighter">Soon</span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer / User Hub */}
+        <div className="mt-auto p-4 border-t border-white/5 space-y-2">
+          {!isCollapsed && user && (
+            <div className="px-4 py-3 mb-2 bg-black/40 border border-white/5 rounded-2xl flex items-center gap-3 animate-in slide-in-from-left-4 duration-500">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden">
+                {user.photoURL ? (
+                  <Image src={user.photoURL} alt={user.displayName || "User"} width={40} height={40} />
+                ) : (
+                  <UserIcon size={20} className="text-primary" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-white truncate">{user.displayName || "Bee User"}</p>
+                <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
+              </div>
+            </div>
+          )}
+          
+          <Link 
+            href="/profile"
+            title={isCollapsed ? "Settings" : undefined}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:bg-white/5 hover:text-white transition-all transform hover:scale-[1.02] active:scale-95",
+              isCollapsed && "justify-center px-0"
+            )}
+          >
+            <UserIcon size={18} className="text-primary" />
+            {!isCollapsed && <span className="font-bold text-sm">Settings</span>}
+          </Link>
+          <button 
+            onClick={() => setIsLogoutOpen(true)}
+            title={isCollapsed ? "Logout" : undefined}
+            className={cn(
+              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all transform hover:scale-[1.02] active:scale-95",
+              isCollapsed && "justify-center px-0"
+            )}
+          >
+            <LogOut size={16} />
+            {!isCollapsed && <span className="font-bold text-xs text-left">Logout</span>}
+          </button>
+        </div>
+      </aside>
+
+      <LogoutModal 
+        isOpen={isLogoutOpen} 
+        onClose={() => setIsLogoutOpen(false)} 
+        onConfirm={logout} 
+      />
+    </>
   );
 }

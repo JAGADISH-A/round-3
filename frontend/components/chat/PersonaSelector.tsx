@@ -36,7 +36,7 @@ export default function PersonaSelector({ selectedId, onSelect }: PersonaSelecto
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
       >
-        <UserSquare2 className="w-3.5 h-3.5 text-[#00E6A8]" />
+        <UserSquare2 className="w-3.5 h-3.5 text-primary" />
         <span className="text-[10px] font-bold text-zinc-300 group-hover:text-white uppercase tracking-wider">
           {selectedPersona?.name || "Career Coach"}
         </span>
@@ -56,7 +56,7 @@ export default function PersonaSelector({ selectedId, onSelect }: PersonaSelecto
                 className={cn(
                   "w-full text-left px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
                   selectedId === persona.id
-                    ? "bg-[#00E6A8]/10 text-[#00E6A8]"
+                    ? "bg-primary/10 text-primary"
                     : "text-zinc-500 hover:text-white hover:bg-white/5"
                 )}
               >

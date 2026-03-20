@@ -102,11 +102,11 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
       {!analysis && !isUploading && (
         <div 
           onClick={() => fileInputRef.current?.click()}
-          className="group relative h-48 border-2 border-dashed border-white/5 rounded-[32px] flex flex-col items-center justify-center cursor-pointer hover:border-[#00E6A8]/20 hover:bg-[#00E6A8]/5 transition-all duration-500 overflow-hidden"
+          className="group relative h-48 border-2 border-dashed border-white/5 rounded-[32px] flex flex-col items-center justify-center cursor-pointer hover:border-primary/20 hover:bg-primary/5 transition-all duration-500 overflow-hidden"
         >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#00E6A8]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Upload className="w-8 h-8 text-[#00E6A8] opacity-40 group-hover:opacity-100" />
+                <Upload className="w-8 h-8 text-primary opacity-40 group-hover:opacity-100" />
             </div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-white transition-colors">Inject Resume PDF</p>
             <p className="text-[10px] text-zinc-700 font-mono mt-2">Max 5MB • Neutral Extraction</p>
@@ -123,9 +123,9 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
       {isUploading && (
         <div className="h-48 border-2 border-white/5 rounded-[32px] flex flex-col items-center justify-center space-y-4">
              <div className="relative w-12 h-12">
-                <Loader2 className="w-12 h-12 text-[#00E6A8] animate-spin" />
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-2 h-2 bg-[#00E6A8] rounded-full animate-ping" />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
                 </div>
              </div>
              <p className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Scanning Neural Structures...</p>
@@ -158,7 +158,7 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
                         <Target className="w-5 h-5 text-[#3b82f6]" />
                         <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Target Role Tuning</h4>
                     </div>
-                    {isReanalyzing && <Loader2 className="w-4 h-4 text-[#00E6A8] animate-spin" />}
+                    {isReanalyzing && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
                 </div>
 
                 <div className="space-y-3">
@@ -167,7 +167,7 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
                         <select 
                             value={selectedRole}
                             onChange={(e) => handleRoleReanalyze(e.target.value)}
-                            className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-3 text-sm font-bold appearance-none hover:border-[#00E6A8]/30 transition-colors focus:outline-none focus:ring-1 focus:ring-[#00E6A8]/50"
+                            className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-3 text-sm font-bold appearance-none hover:border-primary/30 transition-colors focus:outline-none focus:ring-1 focus:ring-primary/50"
                         >
                             {roles.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
@@ -178,12 +178,12 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
 
                 <div className="pt-6 border-t border-white/5 space-y-4">
                      <div className="flex items-center gap-3">
-                        <Code2 className="w-5 h-5 text-[#00E6A8]" />
+                        <Code2 className="w-5 h-5 text-primary" />
                         <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Primary Skills</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {n.skills.map((s: string, i: number) => (
-                            <span key={i} className="px-3 py-1 bg-[#00E6A8]/5 border border-[#00E6A8]/10 rounded-lg text-[10px] text-[#00E6A8] font-bold">
+                            <span key={i} className="px-3 py-1 bg-primary/5 border border-primary/10 rounded-lg text-[10px] text-primary font-bold">
                                 {s}
                             </span>
                         ))}

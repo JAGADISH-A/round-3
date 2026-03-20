@@ -50,7 +50,7 @@ export default function PromptBar({ value, onChange, onSubmit, loading, initialP
   };
 
   return (
-    <div className="flex flex-col w-full bg-[#0a0a0a] border-2 border-white/8 rounded-2xl focus-within:border-[#00E6A8]/30 transition-all p-2 gap-2 shadow-2xl relative z-10">
+    <div className="flex flex-col w-full bg-[#0a0a0a] border-2 border-white/8 rounded-2xl focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/5 transition-all p-2 gap-2 shadow-[0_10px_40px_rgba(0,0,0,0.5)] relative z-10">
       
       {/* Top Controls: Persona and Tone Selectors */}
       <div className="flex items-center gap-2 border-b border-white/5 pb-2 px-1">
@@ -61,7 +61,7 @@ export default function PromptBar({ value, onChange, onSubmit, loading, initialP
 
       {/* Input Area */}
       <div className="flex items-center gap-3 px-2 py-1">
-        <button className="p-1.5 text-zinc-700 hover:text-[#00E6A8] transition-colors shrink-0">
+        <button className="p-1.5 text-zinc-700 hover:text-[#FFD600] transition-colors shrink-0">
           <Paperclip className="w-4 h-4" />
         </button>
         
@@ -82,7 +82,7 @@ export default function PromptBar({ value, onChange, onSubmit, loading, initialP
             "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
             loading || !value.trim() 
               ? "bg-zinc-800 text-zinc-600 grayscale" 
-              : "bg-[#00E6A8] text-black shadow-[0_0_20px_rgba(0,230,168,0.2)] hover:scale-105 active:scale-95"
+              : "bg-[#FFD600] text-black shadow-[0_0_20px_rgba(255,214,0,0.2)] hover:scale-105 active:scale-95"
           )}
         >
           {loading ? (
