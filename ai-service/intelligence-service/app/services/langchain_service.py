@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import time
+
 def _escape_braces(text: str) -> str:
     """Escape curly braces for LangChain templates."""
     return text.replace("{", "{{").replace("}", "}}")
@@ -41,6 +43,7 @@ def contains_tamil(text: str) -> bool:
 # ─── Chat ─────────────────────────────────────────────────────────────────────
 def get_chat_response(messages: List[Dict[str, str]], user_profile: Optional[Dict[str, Any]] = None, lang: str = "en") -> Dict[str, Any]:
     """Generate a smart, role-aware response as a Career Coach with user memory."""
+    start_total = time.time()
     user_query = messages[-1]["content"]
     user_skills = user_profile.get("skills", []) if user_profile else []
     
@@ -183,9 +186,12 @@ def get_chat_response(messages: List[Dict[str, str]], user_profile: Optional[Dic
     
     langchain_messages.append(HumanMessage(content=user_query))
 
+    print(f"[Chat] Model invocation started...")
+    t_llm = time.time()
     # 5. Invoke LLM
     response = llm.invoke(langchain_messages)
     response_text = response.content
+    print(f"[Chat] LLM invocation took {time.time() - t_llm:.2f}s")
 
     # 6. Strict Validation (Anti-Mixing)
     if detected_lang == "ta" and not contains_tamil(response_text):
@@ -198,6 +204,7 @@ def get_chat_response(messages: List[Dict[str, str]], user_profile: Optional[Dic
         response_text = response.content
 
     print(f"[Chat] Response Preview: {response_text[:50]}...")
+    print(f"[Chat] Total Processing took {time.time() - start_total:.2f}s")
 
     return {
         "response": response_text,          # Full markdown for chat UI renderer
