@@ -26,6 +26,7 @@ import {
   Tooltip
 } from "recharts";
 import { motion } from "framer-motion";
+import { detectLanguage } from "@/lib/utils";
 import { ENDPOINTS } from "@/lib/api-config";
 
 interface IdentityReport {
@@ -66,7 +67,11 @@ export default function ProfilePage() {
       const roadmapRes = await fetch(ENDPOINTS.CAREER_ROADMAP, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, resume_analysis: resumeAnalysis })
+        body: JSON.stringify({ 
+          role, 
+          resume_analysis: resumeAnalysis,
+          lang: detectLanguage(role)
+        })
       });
       const roadmapData = roadmapRes.ok ? await roadmapRes.json() : null;
 

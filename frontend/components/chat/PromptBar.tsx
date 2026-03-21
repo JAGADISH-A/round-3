@@ -1,22 +1,41 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Paperclip, SendHorizonal } from "lucide-react";
+import { Paperclip, SendHorizonal, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import PersonaSelector from "./PersonaSelector";
 import ToneSelector from "./ToneSelector";
 import { ChatInputSubmit, ChatInputTextArea } from "./ChatInput";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 interface PromptBarProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (model: string, persona: string, tone: string) => void;
   loading: boolean;
+  isListening?: boolean;
+  onMicToggle?: () => void;
   initialPersona?: string;
+  isVoiceEnabled?: boolean;
+  onVoiceToggle?: (enabled: boolean) => void;
 }
 
-export default function PromptBar({ value, onChange, onSubmit, loading, initialPersona }: PromptBarProps) {
-  const model = "llama33"; // Model is hidden for now as per requirements
+export default function PromptBar({ 
+  value, 
+  onChange, 
+  onSubmit, 
+  loading, 
+  isListening, 
+  onMicToggle, 
+  initialPersona,
+  isVoiceEnabled,
+  onVoiceToggle
+}: PromptBarProps) {
+  const model = "llama33";
+  const { lang } = useLanguage();
+  const t = useMemo(() => translations[lang], [lang]);
   const [persona, setPersona] = useState("career_coach");
   const [tone, setTone] = useState("friendly");
   const [mounted, setMounted] = useState(false);
@@ -69,28 +88,57 @@ export default function PromptBar({ value, onChange, onSubmit, loading, initialP
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask anything about roadmaps, interviews, or careers..."
+          placeholder={t.chat.placeholder}
           rows={1}
-          className="flex-1 bg-transparent text-white placeholder:text-zinc-700 py-1.5 text-[13px] font-mono leading-relaxed outline-none resize-none"
+          className="flex-1 bg-transparent text-white placeholder:text-zinc-700 py-1.5 text-[13px] font-mono leading-relaxed outline-none resize-none max-h-[200px] overflow-y-auto"
           disabled={loading}
         />
 
-        <button
-          onClick={() => onSubmit(model, persona, tone)}
-          disabled={loading || !value.trim()}
-          className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
-            loading || !value.trim() 
-              ? "bg-zinc-800 text-zinc-600 grayscale" 
-              : "bg-[#FFD600] text-black shadow-[0_0_20px_rgba(255,214,0,0.2)] hover:scale-105 active:scale-95"
-          )}
-        >
-          {loading ? (
-            <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-          ) : (
-            <SendHorizonal className="w-4 h-4 font-black" />
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onVoiceToggle?.(!isVoiceEnabled)}
+            type="button"
+            title={isVoiceEnabled ? "Mute AI Response" : "Unmute AI Response"}
+            className={cn(
+              "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 border border-white/5",
+              isVoiceEnabled 
+                ? "bg-primary/20 text-primary border-primary/30" 
+                : "bg-zinc-800 text-zinc-500 hover:text-white"
+            )}
+          >
+            {isVoiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+
+          <button
+            onClick={onMicToggle}
+            type="button"
+            className={cn(
+              "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
+              isListening 
+                ? "bg-red-500 text-white animate-pulse" 
+                : "bg-zinc-800 text-zinc-400 hover:text-[#FFD600] border border-white/5"
+            )}
+          >
+            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+
+          <button
+            onClick={() => onSubmit(model, persona, tone)}
+            disabled={loading || !value.trim()}
+            className={cn(
+              "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
+              loading || !value.trim() 
+                ? "bg-zinc-800 text-zinc-600 grayscale" 
+                : "bg-[#FFD600] text-black shadow-[0_0_20px_rgba(255,214,0,0.2)] hover:scale-105 active:scale-95"
+            )}
+          >
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+            ) : (
+              <SendHorizonal className="w-4 h-4 font-black" />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

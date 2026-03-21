@@ -17,23 +17,29 @@ import {
   Globe
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import LogoutModal from "@/components/auth/LogoutModal";
+import { useMemo } from "react";
 
-const menuItems = [
-  { icon: MessageSquare, label: "Chat", href: "/chat" },
-  { icon: FileText, label: "Resume Analyzer", href: "/resume" },
-  { icon: Video, label: "Interview Simulator", href: "/voice" },
-  { icon: BookOpen, label: "Study Hub", href: "/study", placeholder: true },
-  { icon: Map, label: "Roadmap", href: "/roadmap", placeholder: true },
-];
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [language, setLanguage] = useState<"EN" | "TM">("EN");
+  const { lang, setLang } = useLanguage();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
+
+  const t = useMemo(() => translations[lang], [lang]);
+
+  const menuItems = [
+    { icon: MessageSquare, label: t.sidebar.chat, href: "/chat" },
+    { icon: FileText, label: t.sidebar.resume_analyzer || "Resume Analyzer", href: "/resume" },
+    { icon: Video, label: t.sidebar.voice, href: "/voice" },
+    { icon: BookOpen, label: t.sidebar.study_hub || "Study Hub", href: "/study", placeholder: true },
+    { icon: Map, label: t.sidebar.roadmap, href: "/roadmap", placeholder: true },
+  ];
 
   return (
     <>
@@ -68,16 +74,16 @@ export default function Sidebar() {
           <div className="px-6 mb-6">
             <div className="bg-black/50 p-1 rounded-xl border border-white/5 flex items-center justify-between">
               <button 
-                onClick={() => setLanguage("EN")}
-                className={cn("px-3 py-1.5 text-xs font-bold rounded-lg transition-all", language === "EN" ? "bg-primary text-black" : "text-zinc-500 hover:text-white")}
+                onClick={() => setLang("en")}
+                className={cn("px-3 py-1.5 text-xs font-bold rounded-lg transition-all", lang === "en" ? "bg-primary text-black" : "text-zinc-500 hover:text-white")}
               >
                 EN
               </button>
               <button 
-                onClick={() => setLanguage("TM")}
-                className={cn("px-3 py-1.5 text-xs font-bold rounded-lg transition-all", language === "TM" ? "bg-primary text-black" : "text-zinc-500 hover:text-white")}
+                onClick={() => setLang("ta")}
+                className={cn("px-3 py-1.5 text-xs font-bold rounded-lg transition-all", lang === "ta" ? "bg-primary text-black" : "text-zinc-500 hover:text-white")}
               >
-                TM
+                தமிழ்
               </button>
             </div>
           </div>
@@ -140,7 +146,7 @@ export default function Sidebar() {
             )}
           >
             <UserIcon size={18} className="text-primary" />
-            {!isCollapsed && <span className="font-bold text-sm">Settings</span>}
+            {!isCollapsed && <span className="font-bold text-sm">{t.sidebar.settings}</span>}
           </Link>
           <button 
             onClick={() => setIsLogoutOpen(true)}
@@ -151,7 +157,7 @@ export default function Sidebar() {
             )}
           >
             <LogOut size={16} />
-            {!isCollapsed && <span className="font-bold text-xs text-left">Logout</span>}
+            {!isCollapsed && <span className="font-bold text-xs text-left">{t.sidebar.logout}</span>}
           </button>
         </div>
       </aside>

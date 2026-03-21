@@ -53,13 +53,23 @@ def retrieve_context(query: str, k: int = 5) -> tuple[str, list[dict]]:
 
         context_parts: List[str] = []
         sources: List[Dict[str, Any]] = []
+        seen_content = set()
+
         for doc, dist, meta in zip(docs, distances, metadatas):
             relevance = float(1.0 - float(dist)) if dist is not None else 0.0
             relevance = round(relevance, 4)
             
-            doc_text = str(doc)
-            if relevance > 0.2:
+            doc_text = str(doc).strip()
+            
+            # Simple content-based deduplication
+            content_hash = doc_text[:100].lower() # Use first 100 chars as a fingerprint
+            if content_hash in seen_content:
+                continue
+            
+            if relevance > 0.15: # Lowered threshold slightly to allow more exploration
                 context_parts.append(doc_text)
+                seen_content.add(content_hash)
+                
                 preview = doc_text[:200] + "..." if len(doc_text) > 200 else doc_text
                 sources.append({
                     "text": preview,

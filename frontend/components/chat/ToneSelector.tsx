@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, Smile, Zap, BookOpen, Rocket, Ghost, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
+import { useMemo } from "react";
 
 interface Tone {
   id: string;
@@ -26,6 +29,8 @@ interface ToneSelectorProps {
 
 export default function ToneSelector({ selectedId, onSelect }: ToneSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { lang } = useLanguage();
+  const t = useMemo(() => translations[lang], [lang]);
 
   const selectedTone = TONES.find(t => t.id === selectedId) || TONES[0];
 
@@ -37,7 +42,7 @@ export default function ToneSelector({ selectedId, onSelect }: ToneSelectorProps
       >
         <span className="text-primary">{selectedTone.icon}</span>
         <span className="text-[10px] font-bold text-zinc-300 group-hover:text-white uppercase tracking-wider">
-          {selectedTone.name}
+          {t.tones?.[selectedTone.id] || selectedTone.name}
         </span>
         <ChevronDown className={cn("w-3 h-3 text-zinc-500 transition-transform duration-300", isOpen && "rotate-180")} />
       </button>
@@ -60,7 +65,7 @@ export default function ToneSelector({ selectedId, onSelect }: ToneSelectorProps
                 )}
               >
                 {tone.icon}
-                {tone.name}
+                {t.tones?.[tone.id] || tone.name}
               </button>
             ))}
           </div>

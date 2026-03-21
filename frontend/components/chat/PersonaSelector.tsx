@@ -4,6 +4,9 @@ import React, { useEffect, useState } from "react";
 import { ChevronDown, UserSquare2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ENDPOINTS } from "@/lib/api-config";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
+import { useMemo } from "react";
 
 interface Persona {
   id: string;
@@ -18,6 +21,8 @@ interface PersonaSelectorProps {
 export default function PersonaSelector({ selectedId, onSelect }: PersonaSelectorProps) {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const { lang } = useLanguage();
+  const t = useMemo(() => translations[lang], [lang]);
 
   useEffect(() => {
     fetch(ENDPOINTS.PERSONAS)
@@ -38,7 +43,7 @@ export default function PersonaSelector({ selectedId, onSelect }: PersonaSelecto
       >
         <UserSquare2 className="w-3.5 h-3.5 text-primary" />
         <span className="text-[10px] font-bold text-zinc-300 group-hover:text-white uppercase tracking-wider">
-          {selectedPersona?.name || "Career Coach"}
+          {t.personas?.[selectedId] || selectedPersona?.name || t.personas?.career_coach}
         </span>
         <ChevronDown className={cn("w-3 h-3 text-zinc-500 transition-transform duration-300", isOpen && "rotate-180")} />
       </button>
@@ -60,7 +65,7 @@ export default function PersonaSelector({ selectedId, onSelect }: PersonaSelecto
                     : "text-zinc-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {persona.name}
+                {t.personas?.[persona.id] || persona.name}
               </button>
             ))}
           </div>

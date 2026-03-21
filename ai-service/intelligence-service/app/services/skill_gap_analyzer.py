@@ -29,6 +29,7 @@ def analyze_skill_gaps(user_skills: List[str], roadmap_phases: List[Dict[str, An
             })
             
         enriched_phases.append({
+            **phase_data,
             "phase": phase_name,
             "skills": enriched_skills
         })

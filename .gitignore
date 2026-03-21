@@ -1,5 +1,6 @@
 # --- OS Files ---
 .DS_Store
+**/ .DS_Store
 Thumbs.db
 *.swp
 *.bak
@@ -29,15 +30,15 @@ frontend/.env.test.local
 frontend/.env.production.local
 
 # --- Java/Maven (Backend Gateway) ---
-backend/gateway/target/
-backend/gateway/bin/
-backend/gateway/build/
-backend/gateway/.settings/
-backend/gateway/.project
-backend/gateway/.classpath
+backend/target/
+**/target/
+backend/bin/
+backend/build/
+backend/.settings/
+backend/.project
+backend/.classpath
 
 # --- Python (AI Services) ---
-**/*-env/
 **/__pycache__/
 **/*.py[cod]
 **/*$py.class
@@ -46,11 +47,11 @@ backend/gateway/.classpath
 **/venv/
 **/env/
 **/virtualenv/
-backend/ai-service/intelligence-service/.env
-backend/ai-service/vision-service/.env
-backend/ai-service/intelligence-service/chroma_db/
-backend/ai-service/intelligence-service/dataset/
-backend/ai-service/intelligence-service/pip_list*.txt
+ai-service/intelligence-service/.env
+ai-service/vision-service/.env
+ai-service/intelligence-service/chroma_db/
+ai-service/intelligence-service/dataset/
+ai-service/intelligence-service/pip_list*.txt
 
 # --- Project Specific Data ---
 careerspark_data_external/

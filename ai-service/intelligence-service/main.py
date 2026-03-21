@@ -11,10 +11,14 @@ from app.services.intelligence_service import calculate_career_readiness
 from app.services.career_prep_service import get_career_preparation
 from app.services.roadmap_service import get_career_roadmap
 from app.services.report_service import generate_developer_report
+from fastapi.staticfiles import StaticFiles
+import tempfile
 
 from app.api.models import router as models_router
 from app.api.personas import router as personas_router
 from app.api.chat import router as mcp_chat_router
+from app.api.tts import router as tts_router
+from app.services.tts_service import sanitize_for_tts
 
 app = FastAPI(title="BumbleBee AI Intelligence", version="1.0.0")
 
@@ -53,12 +57,19 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
+    lang: str = "en"
 
 
 # Register MCP routes
 app.include_router(models_router, prefix="/api", tags=["MCP"])
 app.include_router(personas_router, prefix="/api", tags=["MCP"])
 app.include_router(mcp_chat_router, prefix="/api", tags=["MCP"])
+app.include_router(tts_router, prefix="/api", tags=["TTS"])
+
+# Static route for TTS audio files
+temp_tts_dir = os.path.join(tempfile.gettempdir(), "bumblebee_tts")
+os.makedirs(temp_tts_dir, exist_ok=True)
+app.mount("/api/audio", StaticFiles(directory=temp_tts_dir), name="audio")
 
 class VoiceRequest(BaseModel):
     transcript: str
@@ -83,6 +94,7 @@ class PrepRequest(BaseModel):
 class RoadmapRequest(BaseModel):
     role: str
     resume_analysis: dict | None = None
+    lang: str = "en"
 
 
 class ReportRequest(BaseModel):
@@ -134,7 +146,7 @@ def chat(request: ChatRequest):
     
     try:
         messages_dict = [{"role": m.role, "content": m.content} for m in request.messages]
-        result = get_chat_response(messages_dict)
+        result = get_chat_response(messages_dict, lang=request.lang)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -180,7 +192,10 @@ def vision_feedback(request: VisionFeedbackRequest):
     try:
         from app.services.langchain_service import get_vision_coaching_feedback
         feedback = get_vision_coaching_feedback(request.dict())
-        return {"feedback": feedback}
+        return {
+            "feedback": feedback,
+            "tts_text": sanitize_for_tts(feedback)
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -196,7 +211,7 @@ def career_roadmap(request: RoadmapRequest):
         # Extract skills if present in resume_analysis
         user_skills = request.resume_analysis.get("skills", []) if request.resume_analysis else []
         from app.services.roadmap_generator import generate_personalized_roadmap
-        result = generate_personalized_roadmap(request.role, user_skills)
+        result = generate_personalized_roadmap(request.role, user_skills, lang=request.lang)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

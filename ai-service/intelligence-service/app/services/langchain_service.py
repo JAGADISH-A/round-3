@@ -12,6 +12,7 @@ from app.services.ai_config import llm, voice_llm, MODEL_NAME
 from app.services.intent_detector import detect_intent
 from app.services.roadmap_generator import generate_personalized_roadmap, format_roadmap_to_markdown
 from app.services.vector_db_service import retrieve_context
+from app.services.tts_service import sanitize_for_tts, TTS_SPEECH_RULES
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,10 +22,31 @@ def _escape_braces(text: str) -> str:
     return text.replace("{", "{{").replace("}", "}}")
 
 
+def detect_language(text: str) -> str:
+    """
+    Ratio-based language detection: matches frontend detectLanguage() logic.
+    Returns 'ta' if Tamil chars > 20% of all alphabetic chars, else 'en'.
+    """
+    tamil_chars = len(re.findall(r'[\u0B80-\u0BFF]', text))
+    alpha_chars = len(re.findall(r'[A-Za-z\u0B80-\u0BFF]', text))
+    if alpha_chars > 0 and tamil_chars / alpha_chars > 0.2:
+        return "ta"
+    return "en"
+
+# Backwards-compat alias
+def contains_tamil(text: str) -> bool:
+    return detect_language(text) == "ta"
+
+
 # ─── Chat ─────────────────────────────────────────────────────────────────────
-def get_chat_response(messages: List[Dict[str, str]]) -> Dict[str, Any]:
-    """Generate a smart, role-aware response as a Career Coach."""
+def get_chat_response(messages: List[Dict[str, str]], user_profile: Optional[Dict[str, Any]] = None, lang: str = "en") -> Dict[str, Any]:
+    """Generate a smart, role-aware response as a Career Coach with user memory."""
     user_query = messages[-1]["content"]
+    user_skills = user_profile.get("skills", []) if user_profile else []
+    
+    # Force language detection if not provided or to verify
+    detected_lang = "ta" if contains_tamil(user_query) else lang
+    print(f"[Chat] User Query: {user_query[:50]}... | Lang: {detected_lang}")
 
     # 1. Intent Detection
     intent_data = detect_intent(user_query)
@@ -37,39 +59,115 @@ def get_chat_response(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     response_text = ""
 
     # 2. Routing Logic
-    if intent == "greeting":
-        # Direct response for greetings
-        pass 
-    elif intent == "roadmap_request":
-        # Generate a structured roadmap
+    if intent == "roadmap_request":
+        # Check if user already selected a level or sent a selection payload
+        selected_level = None
+        role = "Software Engineer"
+        
+        try:
+            # Handle JSON payload from frontend
+            if user_query.strip().startswith("{") and "roadmap_selection" in user_query:
+                payload = json.loads(user_query)
+                selected_level = payload.get("selected")
+                role = payload.get("query", role)
+        except:
+            pass
+
+        # Fallback to keyword detection if not JSON
+        if not selected_level:
+            low_query = user_query.lower()
+            if "beginner" in low_query: selected_level = "beginner"
+            elif "advanced" in low_query: selected_level = "advanced"
+            elif "specialized" in low_query: selected_level = "specialized"
+
         # Extract role from query (rough heuristic)
-        role_match = re.search(r"(?:become a|roadmap for|path to|as a) ([\w\s]+)", user_query.lower())
-        role = role_match.group(1).strip() if role_match else "Software Engineer"
-        roadmap = generate_personalized_roadmap(role, [])
-        response_text = format_roadmap_to_markdown(roadmap)
-        return {
-            "response": f"That's a fantastic goal! {role} is a rewarding path.\n\n{response_text}",
-            "sources": [],
-            "model": MODEL_NAME,
-            "intent": intent
-        }
+        if not role or role == "Software Engineer":
+            role_match = re.search(r"(?:become a|roadmap for|path to|as a) ([\w\s]+)", user_query.lower())
+            role = role_match.group(1).strip() if role_match else "Software Engineer"
+        
+        if selected_level:
+            # Phase 2: Generate detailed roadmap for selected level
+            roadmap = generate_personalized_roadmap(role, user_skills, level=selected_level, lang=detected_lang)
+            response_text = format_roadmap_to_markdown(roadmap)
+            
+            # Add Smart Suggestions for next steps
+            next_steps = [
+                {"id": "interview_prep", "title": "🎯 Interview Prep", "desc": f"Practice common {role} questions."},
+                {"id": "study_plan", "title": "📚 Study Plan", "desc": "Convert this roadmap into a calendar."},
+                {"id": "resume_review", "title": "📄 Resume Boost", "desc": f"Tailor your resume for {role} roles."}
+            ]
+
+            prefix = "இலக்கிற்கு வாழ்த்துகள்!" if detected_lang == "ta" else "Excellent choice!"
+            
+            full_response = f"{prefix} Here is your detailed **{selected_level.capitalize()}** roadmap for **{role}**:\n\n{response_text}"
+            return {
+                "response": full_response,
+                "tts_text": sanitize_for_tts(full_response),
+                "sources": [],
+                "model": MODEL_NAME,
+                "intent": intent,
+                "roadmap_type": "detailed",
+                "level": selected_level,
+                "options": next_steps, # Use 'options' key for consistency with frontend interactive flow
+                "lang": detected_lang
+            }
+        else:
+            # Phase 1: Provide 3 distinct options (JSON Structure)
+            from app.services.roadmap_generator import generate_roadmap_suggestions
+            options = generate_roadmap_suggestions(role, user_skills=user_skills, lang=detected_lang)
+            
+            response_msg = "உங்கள் எதிர்காலப் பாதையை நான் ஆய்வு செய்துள்ளேன். எதைத் தேர்ந்தெடுக்க விரும்புகிறீர்கள்?" if detected_lang == "ta" else f"I've analyzed the best paths for **{role}**. Which one would you like to explore?"
+            
+            return {
+                "response": response_msg,
+                "tts_text": sanitize_for_tts(response_msg),
+                "sources": [],
+                "model": MODEL_NAME,
+                "intent": intent,
+                "type": "roadmap_options",
+                "options": options,
+                "query": role,
+                "lang": detected_lang
+            }
+    
     elif intent in ["career_question", "salary_query"]:
         # Run RAG only for data-heavy intents
-        context, sources = retrieve_context(user_query)
+        context, sources = retrieve_context(user_query, k=5)
     
     # 3. Build Coach Prompt
     context_block = f"\n\nDATASET SIGNALS (Use if helpful):\n{context}" if context else ""
     
+    # Personalization Logic
+    user_context = ""
+    if user_profile:
+        goal = user_profile.get("goal", "career growth")
+        skills = ", ".join(user_profile.get("skills", []))
+        user_context = f"\nUSER INFO: Goal: {goal}, Known Skills: {skills}"
+
+    # Dynamic Language Prompts
+    if detected_lang == "ta":
+        lang_instruction = (
+            "LANGUAGE RULE: You MUST speak ONLY in Tamil. "
+            "Do NOT use English words. Do NOT provide English translations. "
+            "Use natural, professional, and supportive spoken Tamil. "
+            "If the user asks a question, answer it fully in Tamil."
+        )
+    else:
+        lang_instruction = "LANGUAGE RULE: Speak ONLY in English."
+
     system_prompt = (
         "You are CareerSpark AI — a friendly, proactive, and highly insightful Career Coach. "
         "Your goal is to guide the user step-by-step toward their career goals.\n\n"
-        "COACHING RULES:\n"
+        f"{lang_instruction}\n\n"
+        f"COACHING RULES:\n"
         "1. Be conversational and supportive. Avoid sounding like a database.\n"
-        "2. If the user's goal is broad, ask 1-2 clarifying questions (e.g., about their experience or interests).\n"
-        "3. Use technical data from the context only to add value, not as the main focus.\n"
-        "4. If you don't have specific data for a query, give expert general advice based on industry standards.\n"
+        "2. If the user's goal is broad, ask 1-2 clarifying questions.\n"
+        "3. Refer to the user's career goal periodically to keep them motivated.\n"
+        "4. If you don't have specific data, give expert general advice.\n"
         "5. Keep responses concise but actionable."
+        f"{user_context}"
         f"{context_block}"
+        f"{TTS_SPEECH_RULES}"
     )
     system_prompt = _escape_braces(system_prompt)
 
@@ -87,12 +185,27 @@ def get_chat_response(messages: List[Dict[str, str]]) -> Dict[str, Any]:
 
     # 5. Invoke LLM
     response = llm.invoke(langchain_messages)
+    response_text = response.content
+
+    # 6. Strict Validation (Anti-Mixing)
+    if detected_lang == "ta" and not contains_tamil(response_text):
+        print("[Chat] Validation Failed: Expected Tamil but got English. Retrying...")
+        retry_messages = langchain_messages + [
+            AIMessage(content=response_text),
+            HumanMessage(content="பெயர் தெரியாத மொழியில் பதில் சொல்ல வேண்டாம். தமிழில் மட்டும் பதில் சொல்லவும்.")
+        ]
+        response = llm.invoke(retry_messages)
+        response_text = response.content
+
+    print(f"[Chat] Response Preview: {response_text[:50]}...")
 
     return {
-        "response": response.content,
+        "response": response_text,          # Full markdown for chat UI renderer
+        "tts_text": sanitize_for_tts(response_text),  # Clean prose for TTS engine
         "sources": sources,
         "model": MODEL_NAME,
-        "intent": intent
+        "intent": intent,
+        "lang": detected_lang
     }
 
 

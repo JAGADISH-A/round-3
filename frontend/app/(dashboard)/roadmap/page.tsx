@@ -13,7 +13,7 @@ import {
   Zap
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, detectLanguage } from "@/lib/utils";
 import { ENDPOINTS } from "@/lib/api-config";
 import { RoadmapTimeline } from "@/components/roadmap/RoadmapTimeline";
 
@@ -76,7 +76,8 @@ export default function RoadmapPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           role: targetGoal,
-          resume_analysis: analysis
+          resume_analysis: analysis,
+          lang: detectLanguage(targetGoal)
         })
       });
 

@@ -2,45 +2,54 @@
 
 BumbleBee AI is a next-generation career readiness platform designed to empower students and professionals through advanced AI-driven tools. From resume optimization to real-time interview simulations, BumbleBee AI provides a cohesive, premium experience for the modern job market.
 
-![BumbleBee Logo](logo.png)
+## 📁 Repository Structure
+
+```tree
+.
+├── ai-service/          # Python FastAPI Services (Intelligence & Vision)
+├── backend/             # Java Spring Boot Gateway
+├── frontend/            # Next.js 14 Web Application
+├── scripts/             # Utility & Management Scripts
+└── README.md            # Project Documentation
+```
 
 ## 🚀 Key Features
 
-- **💬 The Hive (AI Chat)**: A sophisticated career coach capable of roadmapping, skill gap analysis, and personalized advice.
-- **🎙️ Voice Pro Analyzer**: Real-time interview simulation with instant vocal analytics (WPM, fillers, confidence) and AI feedback.
-- **📄 Resume Intelligence**: Deep-scan resume analysis with ATS scoring, impact evaluation, and target-role tuning.
+- **💬 The Hive (AI Chat)**: A sophisticated career coach for skill gap analysis and personalized mentoring.
+- **🎙️ Voice Pro Analyzer**: Real-time interview simulation with vocal analytics (WPM, fillers, confidence).
+- **📄 Resume Intelligence**: ATS scoring, impact evaluation, and target-role tuning.
 - **🛡️ Secure Auth**: Robust authentication powered by Firebase.
 - **☸️ Multi-Model Intelligence**: Orchestrated power using Groq (Llama 3), Google Gemini 1.5 Pro, and custom vision models.
 
-## 🏗️ Architecture
+## 🏗️ Technical Architecture
 
-BumbleBee AI utilizes a high-performance hybrid architecture:
-- **Frontend**: Next.js 14 (App Router) with Tailwind CSS.
-- **Intelligence Service**: Python FastAPI / LangChain (Port 8001).
-- **Vision AI Service**: Python FastAPI / Custom Face & Eye Tracking (Port 8002).
-- **Gateway**: Java Spring Boot (Optional orchestration).
-
-## 🛠️ Tech Stack
-
-- **Frameworks**: Next.js, FastAPI, Spring Boot
-- **AI/ML**: LangChain, Groq, Gemini API, MediaPipe
-- **Security**: Firebase Auth
-- **UI/UX**: Tailwind CSS, Framer Motion, Lucide Icons
+- **Frontend**: Next.js 14 (App Router) / Tailwind CSS / Framer Motion.
+- **Intelligence Service**: Python FastAPI / LangChain / ChromaDB.
+- **Vision AI Service**: Python FastAPI / MediaPipe / OpenCV.
+- **Gateway**: Java Spring Boot / Spring Cloud Gateway.
 
 ## ⚙️ Local Setup
 
 ### 1. Prerequisites
 - Node.js 20+
 - Python 3.10+
-- Java 17+ (for Gateway)
+- Java 17+
 
 ### 2. Environment Configuration
-Copy the `.env.example` files to `.env` in their respective directories and fill in your API keys:
-- `frontend/.env.local`
-- `backend/ai-service/intelligence-service/.env`
-- `backend/ai-service/vision-service/.env`
+Copy the provided `.env.example` to `.env` in the root and service directories:
+```bash
+cp .env.example .env
+# Also copy to specific service folders if required by the service local setup
+```
 
 ### 3. Installation & Run
+
+#### **AI Services**
+```bash
+cd ai-service/intelligence-service
+pip install -r requirements.txt
+python main.py
+```
 
 #### **Frontend**
 ```bash
@@ -49,18 +58,10 @@ npm install
 npm run dev
 ```
 
-#### **Intelligence Service**
+#### **Backend Gateway**
 ```bash
-cd backend/ai-service/intelligence-service
-pip install -r requirements.txt
-python main.py
-```
-
-#### **Vision Service**
-```bash
-cd backend/ai-service/vision-service
-pip install -r requirements.txt
-python main.py
+cd backend
+./mvnw spring-boot:run
 ```
 
 ## 📜 License

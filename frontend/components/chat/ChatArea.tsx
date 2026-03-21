@@ -8,13 +8,19 @@ import {
   ChatInputSubmit 
 } from "./ChatInput";
 import PromptBar from "./PromptBar";
-import { cn } from "@/lib/utils";
+import { cn, detectLanguage } from "@/lib/utils";
 import { ENDPOINTS } from "@/lib/api-config";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { getLatestMetrics } from "@/lib/vision-store";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/context/LanguageContext";
+import { useSpeech } from "@/hooks/useSpeech";
+import { useTTS } from "@/hooks/useTTS";
+import { translations } from "@/lib/translations";
+import { useMemo } from "react";
+import { Volume2, VolumeX } from "lucide-react";
 
 interface Message {
   role: "user" | "ai";
@@ -24,6 +30,10 @@ interface Message {
   model?: string;
   persona?: string;
   tone?: string;
+  suggestions?: { label: string; level: string; description: string }[];
+  options?: { id: string; title: string; desc: string }[];
+  roadmapQuery?: string;
+  type?: string;
 }
 
 interface Conversation {
@@ -55,7 +65,61 @@ export default function ChatArea() {
   const [inputValue, setInputValue] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [typingMessageId, setTypingMessageId] = useState<number | null>(null);
+
+  const { lang } = useLanguage();
+  const t = useMemo(() => translations[lang], [lang]);
+  const { isListening, transcript, interimTranscript, detectedLang: speechDetectedLang, startListening, stopListening, setTranscript } = useSpeech(lang, (confidence) => {
+    // Interrupt AI speech only when real speech detected (confidence-gated, debounced)
+    interruptIfSpeaking(confidence);
+  });
+  const { speak, stop, interruptIfSpeaking, isSpeaking } = useTTS();
+  const [activeLang, setActiveLang] = useState<"en" | "ta">("en");
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("careerspark_voice_enabled") === "true";
+    }
+    return false;
+  });
+
+  // Persist voice preference
+  useEffect(() => {
+    localStorage.setItem("careerspark_voice_enabled", isVoiceEnabled.toString());
+  }, [isVoiceEnabled]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingInterruptRef = useRef<boolean>(false);
+  // Ref-based request lock — prevents overlapping API calls even across stale state
+  const isProcessingRef = useRef(false);
+  // True only while the user is actively speaking into the mic — guards input auto-fill
+  const isUserSpeakingRef = useRef(false);
+  // If user sends while a request is in progress, store params here and auto-fire after
+  const pendingMessageRef = useRef<null | { model: string; persona: string; tone: string; value: string }>(null);
+  // Drives UI disable state (input, send button, mic during processing)
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Update activeLang based on UI language or speech detection
+  useEffect(() => {
+    setActiveLang(lang);
+  }, [lang]);
+
+  useEffect(() => {
+    if (speechDetectedLang) {
+      setActiveLang(speechDetectedLang);
+    }
+  }, [speechDetectedLang]);
+
+  // Synchronize transcript to inputValue — ONLY when user is actively speaking.
+  // This prevents TTS echo or stale recognition from polluting the input box.
+  useEffect(() => {
+    if (transcript && isUserSpeakingRef.current) {
+      setInputValue(prev => prev ? `${prev} ${transcript}` : transcript);
+      setTranscript(""); // Clear after injecting
+    } else if (transcript && !isUserSpeakingRef.current) {
+      // Discard echo — user is not speaking, this is TTS bleed
+      setTranscript("");
+    }
+  }, [transcript, setTranscript]);
 
   // Load history on mount
   useEffect(() => {
@@ -112,17 +176,28 @@ export default function ChatArea() {
     }
   };
 
-  const persistMessages = (updatedMessages: Message[], id: string | null) => {
+  const detectIntent = (text: string) => {
+    const lowText = text.toLowerCase();
+    if (lowText.includes("devops") && lowText.includes("roadmap")) return "devops_roadmap";
+    if (lowText.includes("frontend") && lowText.includes("roadmap")) return "frontend_roadmap";
+    if (lowText.includes("backend") && lowText.includes("roadmap")) return "backend_roadmap";
+    if (lowText.includes("roadmap")) return "general_roadmap";
+    return "general_chat";
+  };
+
+  const persistMessages = (updatedMsgs: Message[], id: string | null) => {
     if (!id) return;
-    const title = updatedMessages[0]?.content.slice(0, 40) ?? "New Session";
-    const updated = conversations.map(c =>
-      c.id === id ? { ...c, messages: updatedMessages, title } : c
-    );
-    // If new convo not yet in list, add it
-    const exists = updated.some(c => c.id === id);
-    const final = exists ? updated : [{ id, title, messages: updatedMessages, createdAt: new Date().toLocaleString() }, ...updated];
-    setConversations(final);
-    saveHistory(final);
+    const title = updatedMsgs[0]?.content.slice(0, 40) ?? "New Session";
+    // Use functional updater to always work with latest conversations state
+    setConversations(prev => {
+      const updated = prev.map(c =>
+        c.id === id ? { ...c, messages: updatedMsgs, title } : c
+      );
+      const exists = updated.some(c => c.id === id);
+      const final = exists ? updated : [{ id, title, messages: updatedMsgs, createdAt: new Date().toLocaleString() }, ...updated];
+      saveHistory(final);
+      return final;
+    });
   };
 
   const handleSend = async (
@@ -133,7 +208,28 @@ export default function ChatArea() {
     analysisContext?: any
   ) => {
     const messageContent = overrideValue || inputValue;
-    if (!messageContent.trim() || isThinking) return;
+    if (!messageContent.trim()) return;
+    // Ref-based lock: prevents double-sends even if isThinking state is stale
+    if (isProcessingRef.current) {
+      // Queue this message — will auto-send after current response completes
+      pendingMessageRef.current = { model: selectedModel, persona: selectedPersona, tone: selectedTone, value: messageContent };
+      console.debug("[handleSend] Request queued:", messageContent.slice(0, 40));
+      return;
+    }
+    isProcessingRef.current = true;
+    setIsProcessing(true);
+
+    // User is done speaking — lock input gate BEFORE clearing transcript
+    isUserSpeakingRef.current = false;
+
+    // Strict Language detection — captured immediately, before any async work
+    const inputLang = detectLanguage(messageContent);
+    setActiveLang(inputLang);
+
+    // Stop current speech if any
+    stop();
+
+    const detectedIntent = detectIntent(messageContent);
 
     // Create new conversation on first message
     let currentId = activeId;
@@ -175,9 +271,28 @@ Provide helpful interview coaching feedback.`;
     setMessages(updatedMessages);
     if (!overrideValue) setInputValue("");
     setIsThinking(true);
+    
+    // Interrupt any existing typing
+    typingInterruptRef.current = true;
 
     try {
-      const history = updatedMessages.map(m => ({ role: m.role, content: m.content }));
+      // Intent-based context reset: If a roadmap is requested, 
+      // reduce history to avoid interference from previous context.
+      const historyLimit = detectedIntent !== "general_chat" ? 2 : 10;
+      const history = updatedMessages.slice(-(historyLimit + 1)).map(m => ({ role: m.role, content: m.content }));
+
+      // Fetch User Profile from localStorage
+      let userProfile = null;
+      try {
+        const savedAnalysis = localStorage.getItem("careerspark_resume_analysis");
+        if (savedAnalysis) {
+          const analysis = JSON.parse(savedAnalysis);
+          userProfile = {
+            goal: analysis.career_goal || "Career Development",
+            skills: analysis.skills || []
+          };
+        }
+      } catch (e) { console.error("Failed to parse user profile", e); }
 
       const res = await fetch(ENDPOINTS.MCP_CHAT, {
         method: "POST",
@@ -188,7 +303,10 @@ Provide helpful interview coaching feedback.`;
           persona: selectedPersona,
           tone: selectedTone,
           session_id: currentId,
-          analysis_context: analysisContext
+          analysis_context: analysisContext,
+          lang: inputLang,    // always use locally-captured lang NOT stale activeLang state
+          intent: detectedIntent,
+          user_profile: userProfile
         }),
       });
 
@@ -202,21 +320,73 @@ Provide helpful interview coaching feedback.`;
       }
 
       const data = await res.json();
+      setIsThinking(false);
+
+      const aiResponse = data.response || "No response received.";
       const aiMessage: Message = {
         role: "ai",
-        content: data.response,
+        content: "", // Start empty for typing effect
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         sources: data.sources,
         model: data.model,
         persona: data.persona,
-        tone: data.tone
+        tone: data.tone,
+        type: data.type,
+        options: data.options,
+        roadmapQuery: data.query
       };
 
-      const finalMessages = [...updatedMessages, aiMessage];
-      setMessages(finalMessages);
-      persistMessages(finalMessages, currentId);
+      const messagesWithEmptyAi = [...updatedMessages, aiMessage];
+      const aiMsgIndex = messagesWithEmptyAi.length - 1;
+      setMessages(messagesWithEmptyAi);
+      setTypingMessageId(aiMsgIndex);
+      typingInterruptRef.current = false;
+
+        // Trigger TTS immediately BEFORE typing animation
+        // This ensures audio starts as soon as the response is available.
+        if (isVoiceEnabled) {
+          // Use backend-sanitized tts_text if available, otherwise fallback to response
+          const speechText = data.tts_text || aiResponse;
+          // Use backend-returned lang for max reliability, fallback to local detection
+          speak(speechText, (data.lang as "en" | "ta") || inputLang);
+        }
+
+        // --- Optimized Typing Animation (runs AFTER TTS is queued) ---
+      let currentContent = "";
+      const totalChars = aiResponse.length;
+      
+      // Dynamic speed: faster for long texts, slower for short
+      const baseDelay = totalChars > 500 ? 5 : (totalChars > 200 ? 10 : 15);
+      
+      for (let i = 0; i < totalChars; i++) {
+        // Check for interruption
+        if (typingInterruptRef.current) break;
+
+        currentContent += aiResponse[i];
+        
+        // Batch updates every 3 chars OR if it's the end
+        if (i % 3 === 0 || i === totalChars - 1) {
+          setMessages(prev => {
+            const temp = [...prev];
+            if (temp[aiMsgIndex]) {
+              temp[aiMsgIndex] = { ...temp[aiMsgIndex], content: currentContent };
+            }
+            return temp;
+          });
+          
+          // Small variance in speed
+          const jitter = Math.random() * 5;
+          await new Promise(r => setTimeout(r, baseDelay + jitter));
+        }
+      }
+
+      setTypingMessageId(null);
+      persistMessages([...updatedMessages, { ...aiMessage, content: aiResponse }], currentId);
+
     } catch (err: any) {
       console.error("Chat error:", err);
+      setIsThinking(false);
+      isProcessingRef.current = false;
       
       const isNetworkError = err instanceof TypeError || err.message?.includes("Failed to fetch");
       const errorMessage = isNetworkError 
@@ -232,7 +402,16 @@ Provide helpful interview coaching feedback.`;
       setMessages(finalMessages);
       persistMessages(finalMessages, currentId);
     } finally {
-      setIsThinking(false);
+      isProcessingRef.current = false;
+      setIsProcessing(false);
+      // Auto-fire queued message if one arrived during processing
+      const pending = pendingMessageRef.current;
+      if (pending) {
+        pendingMessageRef.current = null;
+        console.debug("[handleSend] Firing queued message:", pending.value.slice(0, 40));
+        // Small delay so state updates settle
+        setTimeout(() => handleSend(pending.model, pending.persona, pending.tone, pending.value), 50);
+      }
     }
   };
 
@@ -254,6 +433,17 @@ Provide helpful interview coaching feedback.`;
         deleteConversation={deleteConversation}
         handleSend={handleSend}
         messagesEndRef={messagesEndRef}
+        typingMessageId={typingMessageId}
+        isListening={isListening}
+        interimTranscript={interimTranscript}
+        onMicToggle={isListening
+          ? () => { isUserSpeakingRef.current = false; stopListening(); }
+          : () => { isUserSpeakingRef.current = true; startListening(); }
+        }
+        isSpeaking={isSpeaking}
+        isVoiceEnabled={isVoiceEnabled}
+        onVoiceToggle={setIsVoiceEnabled}
+        t={t}
       />
     </Suspense>
   );
@@ -285,6 +475,14 @@ function ChatContent({
   deleteConversation, 
   handleSend, 
   messagesEndRef,
+  typingMessageId,
+  isListening,
+  interimTranscript,
+  onMicToggle,
+  isSpeaking,
+  isVoiceEnabled,
+  onVoiceToggle,
+  t,
   initialPersona
 }: any) {
   // Handle Analysis Context Handoff
@@ -323,7 +521,7 @@ function ChatContent({
       )}>
         <div className="h-[400px] flex flex-col">
         <div className="p-5 border-b border-white/5 flex items-center justify-between shrink-0">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">History</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">{t.sidebar.history}</span>
           <button onClick={() => setShowHistory(false)} className="text-zinc-600 hover:text-white transition-colors">
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -333,7 +531,7 @@ function ChatContent({
           onClick={newConversation}
           className="m-4 flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-white/10 rounded-xl text-zinc-500 hover:text-white hover:border-white/20 transition-all text-[10px] font-black uppercase tracking-widest"
         >
-          <Plus className="w-3.5 h-3.5" /> New Session
+          <Plus className="w-3.5 h-3.5" /> {t.sidebar.new_session}
         </button>
 
         <div className="flex-1 px-3 space-y-1 pb-4 overflow-y-auto">
@@ -384,7 +582,7 @@ function ChatContent({
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Hive Intelligence Active</span>
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.chat.intel_active}</span>
             </div>
           </div>
         </div>
@@ -393,7 +591,7 @@ function ChatContent({
               onClick={newConversation}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/8 text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-white hover:bg-white/10 transition-all"
             >
-              <Plus className="w-3 h-3" /> New
+              <Plus className="w-3 h-3" /> {t.chat.new}
             </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
@@ -405,7 +603,7 @@ function ChatContent({
               )}
             >
               <History className="w-3 h-3" />
-              History {conversations.length > 0 && `(${conversations.length})`}
+              {t.chat.history_label} {conversations.length > 0 && `(${conversations.length})`}
             </button>
           </div>
         </header>
@@ -431,10 +629,10 @@ function ChatContent({
               </motion.div>
               
               <h3 className="text-5xl font-bebas tracking-widest mb-4 text-white uppercase italic">
-                How can the <span className="text-primary">Hive</span> help you today?
+                {t.chat.empty_title_prefix}<span className="text-primary">{t.chat.hive}</span>{t.chat.empty_title_suffix}
               </h3>
               <p className="text-zinc-500 text-sm max-w-md mb-12 font-medium tracking-wide">
-                Ask anything about careers, interviews, resumes, or learning paths.
+                {t.chat.empty_subtitle}
               </p>
 
               {/* Suggestion Chips */}
@@ -470,7 +668,7 @@ function ChatContent({
               >
                 <div
                   className={cn(
-                    "px-5 py-3 rounded-[24px] text-sm leading-relaxed",
+                    "px-5 py-3 rounded-[24px] text-sm leading-relaxed break-words overflow-hidden",
                     msg.role === "user"
                       ? "bg-primary text-black font-medium rounded-tr-none shadow-[0_4px_15px_rgba(255,214,0,0.1)]"
                       : "bg-zinc-900 text-zinc-200 border border-white/5 rounded-tl-none"
@@ -494,21 +692,111 @@ function ChatContent({
                       )}
                     </div>
                   )}
-                  <div className="whitespace-pre-wrap font-sans text-[14px] leading-7">{msg.content}</div>
+                   <div className="whitespace-pre-wrap break-all font-sans text-[14px] leading-7">
+                    {msg.content}
+                    {msg.role === "ai" && typingMessageId === i && (
+                      <span className="inline-block w-1.5 h-3.5 bg-primary ml-1 animate-pulse align-middle">▌</span>
+                    )}
+                  </div>
                   <div className="mt-2 text-[9px] font-mono opacity-25">{msg.timestamp}</div>
                 </div>
+
+                {/* Interactive Roadmap Options (JSON-Based) */}
+                {msg.role === "ai" && msg.type === "roadmap_options" && msg.options && (
+                  <div className="flex flex-col gap-3 mt-4 w-full animate-in fade-in slide-in-from-bottom-3 duration-500">
+                    <div className="flex flex-wrap gap-2">
+                    {msg.options.map((option: any) => (
+                      <button
+                        key={option.id}
+                        onClick={() => {
+                          const isRoadmapLevel = ["beginner", "advanced", "specialized"].includes(option.id);
+                          handleSend(
+                            localStorage.getItem("careerspark_model") || "llama33",
+                            msg.persona || "career_coach",
+                            msg.tone || "friendly",
+                            isRoadmapLevel ? JSON.stringify({
+                              type: "roadmap_selection",
+                              selected: option.id,
+                              query: msg.roadmapQuery || "Software Engineer"
+                            }) : option.title
+                          );
+                        }}
+                        className="group relative flex items-center justify-between p-4 rounded-2xl bg-gradient-to-br from-zinc-900 to-black border border-white/5 hover:border-primary/40 hover:from-primary/10 hover:to-primary/5 transition-all duration-500 min-w-[200px] flex-1 text-left"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-black text-primary group-hover:text-white uppercase tracking-wider transition-colors">
+                            {option.title}
+                          </span>
+                          <span className="text-[10px] text-zinc-500 font-medium leading-relaxed group-hover:text-zinc-300 transition-colors">
+                            {option.desc}
+                          </span>
+                        </div>
+                        <ChevronLeft className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 rotate-180 transition-all duration-300 translate-x-2 group-hover:translate-x-0" />
+                      </button>
+                    ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Legacy Suggestions (Fallback) */}
+                {msg.role === "ai" && msg.suggestions && msg.suggestions.length > 0 && !msg.options && (
+                  <div className="flex flex-wrap gap-2 mt-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    {msg.suggestions.map((suggestion: any, idx: number) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSend(
+                          localStorage.getItem("careerspark_model") || "llama33",
+                          msg.persona || "career_coach",
+                          msg.tone || "friendly",
+                          `I want to explore the ${suggestion.level} roadmap: ${suggestion.label}`
+                        )}
+                        className="group relative flex flex-col items-start p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 max-w-[200px]"
+                      >
+                        <span className="text-[11px] font-bold text-primary group-hover:text-white transition-colors uppercase tracking-tight">
+                          {suggestion.label}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
+                          {suggestion.description}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
           ))}
 
-          {isThinking && (
+          {(isThinking || isSpeaking) && (
             <div className="flex items-start">
               <div className="px-5 py-4 bg-[#0a0a0a] border border-[#FFD600]/10 rounded-2xl rounded-bl-sm flex items-center gap-3">
                 <div className="flex gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s]" />
-                  <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.15s]" />
-                  <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.3s]" />
+                  <div className={cn(
+                    "w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s]",
+                    isSpeaking && "animate-pulse origin-center scale-110"
+                  )} />
+                  <div className={cn(
+                    "w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.15s]",
+                    isSpeaking && "animate-pulse origin-center scale-110"
+                  )} />
+                   <div className={cn(
+                    "w-1.5 h-1.5 bg-[#FFD600] rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.3s]",
+                    isSpeaking && "animate-pulse origin-center scale-110"
+                  )} />
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#FFD600]/60">Hive is thinking...</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#FFD600]/60 flex items-center gap-2">
+                  {isSpeaking ? (
+                    <>
+                      <Volume2 className="w-3 h-3 animate-pulse" />
+                      {t.chat.speaking ?? "Speaking..."}
+                    </>
+                  ) : (
+                    isListening ? (
+                      <div className="flex items-center gap-2">
+                        <span className="animate-pulse">●</span>
+                        {interimTranscript || t.chat.listening}
+                      </div>
+                    ) : t.chat.thinking
+                  )}
+                </span>
               </div>
             </div>
           )}
@@ -519,9 +807,13 @@ function ChatContent({
           <PromptBar
             value={inputValue}
             onChange={setInputValue}
-            onSubmit={handleSend}
+             onSubmit={handleSend}
             loading={isThinking}
+            isListening={isListening}
+            onMicToggle={onMicToggle}
             initialPersona={initialPersona}
+            isVoiceEnabled={isVoiceEnabled}
+            onVoiceToggle={onVoiceToggle}
           />
         </div>
       </div>
