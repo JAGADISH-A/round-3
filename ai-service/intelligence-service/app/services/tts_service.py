@@ -72,17 +72,42 @@ class TTSService:
         Generates TTS using edge-tts and returns the file path.
         This is an async function.
         """
-        voice = self.VOICES.get(lang, self.VOICES["en"])
+        import logging
+        logger = logging.getLogger(__name__)
         
+        voice = self.VOICES.get(lang, self.VOICES["en"])
+        clean_text = sanitize_for_tts(text)
+        if not clean_text:
+            clean_text = "I am sorry, I have nothing to say."
+            
         # Ensure temporary directory exists
         temp_dir = os.path.join(tempfile.gettempdir(), "bumblebee_tts")
         os.makedirs(temp_dir, exist_ok=True)
         
         file_path = os.path.join(temp_dir, f"{uuid.uuid4()}.mp3")
         
-        communicate = edge_tts.Communicate(text, voice)
+        logger.info(f"[TTS] Synthesizing {len(clean_text)} chars to {file_path}")
+        communicate = edge_tts.Communicate(clean_text, voice)
         await communicate.save(file_path)
+        logger.info(f"[TTS] Synthesized successfully.")
         
         return file_path
+
+    async def generate_tts_stream(self, text: str, lang: str):
+        """
+        Yields audio byte chunks asynchronously for real-time StreamingResponse.
+        """
+        voice = self.VOICES.get(lang, self.VOICES["en"])
+        clean_text = sanitize_for_tts(text)
+        
+        # Fallback if empty after sanitization
+        if not clean_text:
+            clean_text = "I am sorry, I have nothing to say."
+            
+        communicate = edge_tts.Communicate(clean_text, voice)
+        
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                yield chunk["data"]
 
 tts_service = TTSService()

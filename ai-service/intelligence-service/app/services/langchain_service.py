@@ -167,7 +167,8 @@ def get_chat_response(messages: List[Dict[str, str]], user_profile: Optional[Dic
         "2. If the user's goal is broad, ask 1-2 clarifying questions.\n"
         "3. Refer to the user's career goal periodically to keep them motivated.\n"
         "4. If you don't have specific data, give expert general advice.\n"
-        "5. Keep responses concise but actionable."
+        "5. Keep responses concise but actionable. Ensure every sentence is complete.\n"
+        "6. CRITICAL: Never truncate your response. Finish your final thought completely."
         f"{user_context}"
         f"{context_block}"
         f"{TTS_SPEECH_RULES}"
@@ -471,7 +472,9 @@ Metrics:
 - Confidence Score: {confidence}%
 
 Provide constructive advice on how the candidate can improve their interview presence.
-Keep the feedback concise and actionable."""
+Keep the feedback concise and actionable.
+
+{TTS_SPEECH_RULES}"""
 
     try:
         response = llm.invoke(prompt)

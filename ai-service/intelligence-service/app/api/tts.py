@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from app.services.tts_service import tts_service
 import os
@@ -29,4 +29,20 @@ async def generate_voice(request: TTSRequest, background_tasks: BackgroundTasks)
         return FileResponse(file_path, media_type="audio/mpeg")
     except Exception as e:
         print(f"TTS Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/tts/stream")
+async def generate_voice_stream(request: TTSRequest):
+    """
+    Real-time streaming endpoint for TTS. 
+    Yields MPEG audio bytes as they are synthesized.
+    """
+    try:
+        lang_code = "ta" if request.lang == "ta" else "en"
+        return StreamingResponse(
+            tts_service.generate_tts_stream(request.text, lang_code), 
+            media_type="audio/mpeg"
+        )
+    except Exception as e:
+        print(f"TTS Stream Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

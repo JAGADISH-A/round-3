@@ -26,11 +26,8 @@ class FaceMeshDetector:
         if not self.initialized or self.face_mesh is None:
             return {
                 "face_detected": False,
-                "faces": 0,
-                "confidence_score": 0,
-                "eye_contact": 0,
-                "engagement": 0,
-                "head_pose": "uninitialized"
+                "faces": [],
+                "confidence_score": 0
             }
 
         try:
@@ -39,39 +36,36 @@ class FaceMeshDetector:
             results = self.face_mesh.process(rgb_frame)
 
             if results.multi_face_landmarks:
-                landmarks = results.multi_face_landmarks[0]
-                
-                # 1. Estimation Heuristics
-                head_pose = self._estimate_head_pose(landmarks)
-                eye_contact = self._estimate_eye_contact(landmarks, head_pose)
-                engagement = self._compute_engagement(head_pose, eye_contact)
+                face_list = []
+                for landmarks in results.multi_face_landmarks:
+                    # 1. Estimation Heuristics
+                    head_pose = self._estimate_head_pose(landmarks)
+                    eye_contact = self._estimate_eye_contact(landmarks, head_pose)
+                    engagement = self._compute_engagement(head_pose, eye_contact)
+                    
+                    face_list.append({
+                        "eye_contact": eye_contact,
+                        "engagement": engagement,
+                        "head_pose": head_pose
+                    })
 
                 return {
                     "face_detected": True,
-                    "faces": len(results.multi_face_landmarks),
-                    "confidence_score": 85,
-                    "eye_contact": eye_contact,
-                    "engagement": engagement,
-                    "head_pose": head_pose
+                    "faces": face_list,
+                    "confidence_score": 85
                 }
 
             return {
                 "face_detected": False,
-                "faces": 0,
-                "confidence_score": 30,
-                "eye_contact": 0,
-                "engagement": 0,
-                "head_pose": "unknown"
+                "faces": [],
+                "confidence_score": 0
             }
         except Exception as e:
             print(f"ERROR:    Analysis failed: {e}")
             return {
                 "face_detected": False,
-                "faces": 0,
-                "confidence_score": 0,
-                "eye_contact": 0,
-                "engagement": 0,
-                "head_pose": "error"
+                "faces": [],
+                "confidence_score": 0
             }
 
     def _estimate_head_pose(self, landmarks):

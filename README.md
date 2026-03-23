@@ -1,71 +1,48 @@
-# 🐝 BumbleBee AI | Your Intelligent Career Ecosystem
+# CareerSpark AI - Interview Simulator Bot
 
-BumbleBee AI is a next-generation career readiness platform designed to empower students and professionals through advanced AI-driven tools. From resume optimization to real-time interview simulations, BumbleBee AI provides a cohesive, premium experience for the modern job market.
+A technical interview simulation bot for Telegram, powered by AI Intelligence and Vision services.
 
-## 📁 Repository Structure
+## Prerequisites
+- Python 3.11+
+- [FFmpeg](https://ffmpeg.org/) (for Voice Note handling)
+- Telegram Bot Token from [@BotFather](https://t.me/BotFather)
 
-```tree
-.
-├── ai-service/          # Python FastAPI Services (Intelligence & Vision)
-├── backend/             # Java Spring Boot Gateway
-├── frontend/            # Next.js 14 Web Application
-├── scripts/             # Utility & Management Scripts
-└── README.md            # Project Documentation
-```
+## Setup Instructions
 
-## 🚀 Key Features
+1.  **Clone the Repository**
+    ```bash
+    git clone <your-repo-url>
+    cd nm
+    ```
 
-- **💬 The Hive (AI Chat)**: A sophisticated career coach for skill gap analysis and personalized mentoring.
-- **🎙️ Voice Pro Analyzer**: Real-time interview simulation with vocal analytics (WPM, fillers, confidence).
-- **📄 Resume Intelligence**: ATS scoring, impact evaluation, and target-role tuning.
-- **🛡️ Secure Auth**: Robust authentication powered by Firebase.
-- **☸️ Multi-Model Intelligence**: Orchestrated power using Groq (Llama 3), Google Gemini 1.5 Pro, and custom vision models.
+2.  **Configure Environment Variables**
+    Copy the `.env.example` to `.env` in the `ai-service/intelligence-service/` directory:
+    ```bash
+    cp .env.example .env
+    ```
+    Edit the `.env` file and add your `TELEGRAM_BOT_TOKEN`.
 
-## 🏗️ Technical Architecture
+3.  **Install Dependencies**
+    Navigate to the intelligence service and set up a virtual environment:
+    ```powershell
+    cd ai-service\intelligence-service
+    python -m venv venv
+    .\venv\Scripts\activate
+    pip install -r requirements.txt
+    ```
 
-- **Frontend**: Next.js 14 (App Router) / Tailwind CSS / Framer Motion.
-- **Intelligence Service**: Python FastAPI / LangChain / ChromaDB.
-- **Vision AI Service**: Python FastAPI / MediaPipe / OpenCV.
-- **Gateway**: Java Spring Boot / Spring Cloud Gateway.
+4.  **Run the Bot**
+    ```powershell
+    python run_telegram_bot.py
+    ```
 
-## ⚙️ Local Setup
+## Usage
+- `/start`: Initialize the bot and view commands.
+- `/practice`: Begin a structured 5-question interview session.
+- `/coach`: Switch to regular AI career coaching mode (text-based).
+- `/help`: View instructions.
 
-### 1. Prerequisites
-- Node.js 20+
-- Python 3.10+
-- Java 17+
-
-### 2. Environment Configuration
-Copy the provided `.env.example` to `.env` in the root and service directories:
-```bash
-cp .env.example .env
-# Also copy to specific service folders if required by the service local setup
-```
-
-### 3. Installation & Run
-
-#### **AI Services**
-```bash
-cd ai-service/intelligence-service
-pip install -r requirements.txt
-python main.py
-```
-
-#### **Frontend**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-#### **Backend Gateway**
-```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-## 📜 License
-This project is for educational and career-readiness purposes.
-
----
-*Built with ❤️ by the BumbleBee AI Team.*
+## AI Engine Features
+- **Strict Latency Control**: Guaranteed responses under 8 seconds.
+- **Automated Evaluation**: Real-time scoring and feedback for interview answers.
+- **Speech Pipeline**: Integrated TTS feedback for a more realistic interview feel.

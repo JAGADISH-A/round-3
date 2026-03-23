@@ -59,6 +59,7 @@ verify_output.txt
 verify_*.py
 
 # --- Env Files (General) ---
-.env
-.env.*
+**/.env
+**/.env.*
 !.env.example
+

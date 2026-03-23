@@ -194,21 +194,14 @@ class TTSController {
     this.abortCtrl = new AbortController();
 
     try {
-      const res = await fetch(`${TTS_BASE_URL}/api/tts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, lang }),
-        signal: this.abortCtrl.signal,
-      });
-
-      if (!res.ok) throw new Error(`TTS API ${res.status}`);
-
-      const blob = await res.blob();
-
-      if (this.sequenceId !== seqId) return false; // Aborted while fetching
-
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+      // Use GET request with query params for native HTML5 Audio progressive streaming
+      const url = `${TTS_BASE_URL}/api/tts/stream?text=${encodeURIComponent(text)}&lang=${lang}`;
+      
+      const audio = new Audio();
+      audio.crossOrigin = "anonymous";
+      audio.src = url;
+      audio.load();
+      
       this.audio = audio;
 
       return await new Promise<boolean>(resolve => {
@@ -221,7 +214,7 @@ class TTSController {
           if (resolved) return;
           resolved = true;
           if (watchdogTimer) clearInterval(watchdogTimer);
-          URL.revokeObjectURL(url);
+          if (this.audio) this.audio.src = "";
           this.audio = null;
           resolve(result && this.sequenceId === seqId);
         };
@@ -265,7 +258,6 @@ class TTSController {
 
         if (this.sequenceId !== seqId) {
           audio.src = "";
-          URL.revokeObjectURL(url);
           resolve(false);
           return;
         }
