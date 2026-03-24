@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { Upload, X, CheckCircle, Loader2, Target, Briefcase, GraduationCap, Code2, AlertCircle, RefreshCcw, ChevronDown } from "lucide-react";
 import { ENDPOINTS } from "@/lib/api-config";
 import { cn } from "@/lib/utils";
@@ -39,7 +39,7 @@ interface ResumeUploadProps {
     onAnalysisComplete: (data: ResumeAnalysis, jdText?: string) => void;
 }
 
-export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
+const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
@@ -49,11 +49,11 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
   const [showJdInput, setShowJdInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const roles = [
+  const roles = useMemo(() => [
     "Frontend Developer", "Backend Developer", "Full Stack Developer",
     "DevOps Engineer", "Data Engineer", "ML Engineer", "Android Developer",
     "iOS Developer", "QA Engineer", "Product Manager", "System Architect"
-  ];
+  ], []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,6 +114,25 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
       setIsReanalyzing(false);
     }
   };
+
+  const normalized = useMemo(() => {
+    if (!analysis) return null;
+    return {
+      ...analysis,
+      skills: analysis.skills ?? [],
+      experience: analysis.experience ?? [],
+      projects: analysis.projects ?? [],
+      education: analysis.education ?? [],
+      skill_gap: analysis.skill_gap ?? [],
+      keyword_suggestions: analysis.keyword_suggestions ?? [],
+      improvement_checklist: analysis.improvement_checklist ?? [],
+      ats_score: analysis.ats_score ?? 0,
+      strength_score: analysis.strength_score ?? 0,
+      experience_impact_score: analysis.experience_impact_score ?? 0,
+      industry_readiness: analysis.industry_readiness ?? "Beginner",
+      confirmed_role: analysis.confirmed_role || analysis.inferred_role || "Unknown Role"
+    };
+  }, [analysis]);
 
   return (
     <div className="space-y-6">
@@ -181,24 +200,7 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
         </div>
       )}
 
-      {analysis && (() => {
-        // Normalize analysis to prevent crashes on missing AI fields
-        const n = {
-          ...analysis,
-          skills: analysis.skills ?? [],
-          experience: analysis.experience ?? [],
-          projects: analysis.projects ?? [],
-          education: analysis.education ?? [],
-          skill_gap: analysis.skill_gap ?? [],
-          keyword_suggestions: analysis.keyword_suggestions ?? [],
-          improvement_checklist: analysis.improvement_checklist ?? [],
-          ats_score: analysis.ats_score ?? 0,
-          strength_score: analysis.strength_score ?? 0,
-          experience_impact_score: analysis.experience_impact_score ?? 0,
-          industry_readiness: analysis.industry_readiness ?? "Beginner",
-          confirmed_role: analysis.confirmed_role || analysis.inferred_role || "Unknown Role"
-        };
-        return (
+      {normalized && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in zoom-in-95 duration-700">
             {/* Metadata Selection */}
             <div className="liquid-glass p-8 rounded-[32px] border border-white/5 space-y-6">
@@ -211,7 +213,7 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
                 </div>
 
                 <div className="space-y-3">
-                    <p className="text-[10px] text-zinc-500 font-mono italic">AI Inference: {n.inferred_role}</p>
+                    <p className="text-[10px] text-zinc-500 font-mono italic">AI Inference: {normalized.inferred_role}</p>
                     <div className="relative group">
                         <select 
                             value={selectedRole}
@@ -231,12 +233,12 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
                         <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Primary Skills</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {n.skills.map((s: string, i: number) => (
+                        {normalized.skills.map((s: string, i: number) => (
                             <span key={i} className="px-3 py-1 bg-primary/5 border border-primary/10 rounded-lg text-[10px] text-primary font-bold">
                                 {s}
                             </span>
                         ))}
-                        {n.skills.length === 0 && <p className="text-[10px] text-zinc-600 italic">No skills detected</p>}
+                        {normalized.skills.length === 0 && <p className="text-[10px] text-zinc-600 italic">No skills detected</p>}
                     </div>
                 </div>
             </div>
@@ -253,19 +255,19 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
                 </div>
 
                 <div className="space-y-4 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
-                    {n.experience.map((exp: any, i: number) => (
+                    {normalized.experience.map((exp: any, i: number) => (
                         <div key={i} className="border-l-2 border-amber-500/20 pl-4 py-1">
                             <p className="text-xs font-bold">{exp.title} <span className="text-zinc-600 font-mono text-[10px]">@ {exp.company}</span></p>
                             <p className="text-[10px] text-zinc-500 mt-1 italic">{exp.impact}</p>
                         </div>
                     ))}
-                    {n.experience.length === 0 && <p className="text-xs text-zinc-600 italic">No professional experience detected</p>}
+                    {normalized.experience.length === 0 && <p className="text-xs text-zinc-600 italic">No professional experience detected</p>}
                 </div>
 
                 <div className="pt-4 flex items-center justify-between">
                      <div className="flex flex-col">
                         <span className="text-[10px] uppercase text-zinc-600 font-bold">Project Pulse</span>
-                        <span className="text-sm font-bold text-white">{n.projects.length} Active Modules</span>
+                        <span className="text-sm font-bold text-white">{normalized.projects.length} Active Modules</span>
                      </div>
                      <button 
                         onClick={() => { setAnalysis(null); setError(null); }}
@@ -276,8 +278,7 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
                 </div>
             </div>
         </div>
-        );
-      })()}
+      )}
 
       {error && (
         <div className="p-4 bg-red-900/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-bounce">
@@ -287,4 +288,7 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
       )}
     </div>
   );
-}
+});
+
+ResumeUpload.displayName = "ResumeUpload";
+export default ResumeUpload;

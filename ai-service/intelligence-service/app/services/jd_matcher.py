@@ -1,7 +1,7 @@
 """JD Matching Service — Compares a parsed resume against a Job Description."""
 import re
-from typing import List, Dict, Any
-from math import sqrt
+from typing import List, Dict, Any, Optional
+from math import sqrt, floor
 
 
 # ── Stop Words (basic English filter) ─────────────────────────────────────────
@@ -236,3 +236,116 @@ def match_resume_to_jd(resume_text: str, jd_text: str, role: str = "Software Eng
         "action_insights": action_insights,
         "suggested_bullets": suggested_bullets,
     }
+
+
+# ── Feedback Loop Helpers ─────────────────────────────────────────────────────
+
+_ACTION_VERBS = {
+    "built", "designed", "implemented", "engineered", "developed", "created",
+    "deployed", "optimized", "reduced", "improved", "automated", "integrated",
+    "spearheaded", "led", "managed", "launched", "delivered", "architected",
+    "migrated", "scaled", "refactored", "streamlined", "accelerated", "drove"
+}
+
+_METRIC_PATTERN = re.compile(
+    r'\b(\d+[kKmMbB%]?\+?\s*(ms|sec|seconds?|minutes?|hours?|days?|users?|requests?|endpoints?|services?|%)?)\b'
+    r'|\b\d+x\b|\b(\d+\.\d+)%\b|\b\d{2,}[+]?\b',
+    re.IGNORECASE
+)
+
+_EXPECTED_SECTIONS = {"experience", "education", "skills", "projects", "summary"}
+
+
+def recalculate_score(updated_resume: str, jd_text: str, role: str = "Software Engineer") -> int:
+    """Re-run JD matching and return the new blended score (0–100)."""
+    result = match_resume_to_jd(updated_resume, jd_text, role=role)
+    return result["jd_match_score"]
+
+
+def compute_score_delta(old_score: int, new_score: int) -> Dict[str, Any]:
+    """Compute score change between two JD match evaluations."""
+    clamped_new = max(0, min(100, new_score))
+    delta = max(-100, min(100, clamped_new - old_score))
+    return {
+        "previous_score": old_score,
+        "new_score": clamped_new,
+        "score_delta": delta,
+        "match_label": generate_match_label(clamped_new),
+    }
+
+
+def generate_improvement_summary(before: str, after: str) -> Dict[str, Any]:
+    """Detect improvements between original and rewritten bullet."""
+    before_lower = before.lower()
+    after_lower = after.lower()
+    improvements = []
+
+    # Detect new action verbs
+    before_verbs = {v for v in _ACTION_VERBS if v in before_lower}
+    after_verbs = {v for v in _ACTION_VERBS if v in after_lower}
+    new_verbs = after_verbs - before_verbs
+    if new_verbs:
+        improvements.append(f"Added strong action verb: '{next(iter(new_verbs)).capitalize()}'")
+
+    # Detect new metrics
+    before_metrics = set(_METRIC_PATTERN.findall(before))
+    after_metrics = set(_METRIC_PATTERN.findall(after))
+    if len(after_metrics) > len(before_metrics):
+        improvements.append("Added quantified metric or measurable outcome")
+
+    # Detect new technical keywords
+    before_tokens = set(_tokenize(before))
+    after_tokens = set(_tokenize(after))
+    new_tech = (after_tokens - before_tokens) & _TECH_BOOST
+    if new_tech:
+        improvements.append(f"Introduced technical keyword: '{next(iter(new_tech)).upper()}'")
+
+    # Word count improvement
+    if len(after.split()) > len(before.split()):
+        improvements.append("Expanded detail and clarity")
+
+    if not improvements:
+        improvements.append("Refined language and flow")
+
+    parts = []
+    if new_verbs:
+        parts.append("strong action verb")
+    if len(after_metrics) > len(before_metrics):
+        parts.append("measurable impact")
+    if new_tech:
+        parts.append("technical alignment")
+    if not parts:
+        parts.append("clarity")
+
+    impact_summary = f"Improved {', '.join(parts)} in your bullet point"
+    return {"impact_summary": impact_summary, "improvements": improvements}
+
+
+def compute_readiness_score(
+    jd_score: int,
+    sections_present: Optional[List[str]] = None,
+    skills_count: int = 0
+) -> Dict[str, Any]:
+    """Compute overall resume readiness score from multiple signals."""
+    sections = [s.lower() for s in (sections_present or [])]
+    section_completeness = len({s for s in sections} & _EXPECTED_SECTIONS) / len(_EXPECTED_SECTIONS)
+    # Normalize skills: 10+ skills = 100%, scale linearly below
+    skill_coverage = min(skills_count / 10.0, 1.0)
+
+    readiness = (
+        jd_score * 0.5
+        + section_completeness * 100 * 0.3
+        + skill_coverage * 100 * 0.2
+    )
+    readiness = int(max(0, min(100, floor(readiness))))
+
+    if readiness >= 86:
+        label = "Strong Candidate"
+    elif readiness >= 66:
+        label = "Interview Ready"
+    elif readiness >= 41:
+        label = "Improving"
+    else:
+        label = "Beginner"
+
+    return {"resume_readiness": readiness, "readiness_label": label}

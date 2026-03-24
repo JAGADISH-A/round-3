@@ -1,0 +1,235 @@
+import { useState, useRef, useCallback } from "react";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+export interface JdMatch {
+  jd_match_score: number;
+  match_label: string;
+  benchmark_range?: string;
+  matched_keywords: string[];
+  missing_keywords: string[];
+  matched_with_labels?: { keyword: string; label: string }[];
+  missing_with_labels?: { keyword: string; label: string }[];
+  tech_matched_count: number;
+  tech_required_count: number;
+  action_insights?: { skill: string; type: string; message: string }[];
+  suggested_bullets?: string[];
+}
+
+export interface ResumeAnalysis {
+  full_text: string;
+  inferred_role: string;
+  confirmed_role?: string;
+  skills: string[];
+  education: { degree: string; institution: string; year: string }[];
+  experience: { title: string; company: string; duration: string; impact: string }[];
+  projects: { name: string; tech_stack: string[]; description: string }[];
+  ats_score: number;
+  strength_score: number;
+  industry_readiness: string;
+  skill_gap: string[];
+  keyword_suggestions: string[];
+  improvement_checklist: { task: string; priority: string }[];
+  experience_impact_score: number;
+  jd_match?: JdMatch | null;
+}
+
+// ─── Scoring constants ────────────────────────────────────────────────────────
+const ACTION_VERBS = new Set([
+  "engineered","built","designed","optimized","led","developed","implemented",
+  "architected","deployed","automated","reduced","improved","scaled","launched",
+  "delivered","accelerated","created","transformed","managed","established",
+  "integrated","migrated","refactored","streamlined","achieved","increased",
+]);
+
+// Keyword aliases: canonical → list of aliases to detect in text
+const KEYWORD_ALIASES: Record<string, string[]> = {
+  "aws":        ["aws","amazon web services","ec2","s3","lambda","cloudfront","rds"],
+  "docker":     ["docker","containerization","container","dockerfile"],
+  "kubernetes": ["kubernetes","k8s","eks","helm","pod","cluster"],
+  "pytorch":    ["pytorch","torch"],
+  "tensorflow": ["tensorflow","tf","keras"],
+  "react":      ["react","reactjs","react.js","jsx"],
+  "node":       ["node","nodejs","node.js","express"],
+  "python":     ["python","py","django","flask","fastapi"],
+  "sql":        ["sql","postgresql","mysql","postgres","relational database"],
+  "ci/cd":      ["ci/cd","github actions","jenkins","gitlab ci","pipeline"],
+  "redis":      ["redis","cache","caching"],
+  "kafka":      ["kafka","message queue","event streaming","pub/sub"],
+  "graphql":    ["graphql","gql"],
+  "typescript": ["typescript","ts"],
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function getMatchLabel(score: number): string {
+  if (score >= 75) return "Strong Match";
+  if (score >= 55) return "Good Match";
+  if (score >= 35) return "Moderate Match";
+  return "Low Match";
+}
+
+/** Expand keyword to all its known aliases */
+function getAliases(keyword: string): string[] {
+  const lower = keyword.toLowerCase();
+  return KEYWORD_ALIASES[lower] ?? [lower];
+}
+
+/** Check if bullet contains this keyword (by alias) */
+function bulletContainsKeyword(bullet: string, keyword: string): boolean {
+  const lowerBullet = bullet.toLowerCase();
+  return getAliases(keyword).some((alias) => lowerBullet.includes(alias));
+}
+
+export interface BulletImpact {
+  delta: number;
+  newScore: number;
+  newlyMatched: string[];
+  breakdown: { reason: string; points: number }[];
+  noImpact: boolean;
+}
+
+/** Client-side scoring engine with weighted + diminishing returns */
+function computeBulletImpact(
+  bullet: string,
+  missingKeywords: string[],
+  currentScore: number,
+  usedKeywords: Set<string>
+): BulletImpact {
+  const lowerBullet = bullet.toLowerCase();
+  const words = lowerBullet.split(/\s+/);
+  const breakdown: { reason: string; points: number }[] = [];
+  const newlyMatched: string[] = [];
+  let baseScore = 0;
+
+  // +3–5 per newly matched missing keyword (skip already-exploited ones)
+  for (const kw of missingKeywords) {
+    if (usedKeywords.has(kw)) continue;
+    if (bulletContainsKeyword(bullet, kw)) {
+      const pts = currentScore < 40 ? 5 : currentScore < 65 ? 4 : 3;
+      baseScore += pts;
+      newlyMatched.push(kw);
+      breakdown.push({ reason: `+${pts} "${kw}" keyword`, points: pts });
+    }
+  }
+
+  // +2 for strong action verb (check first word mainly)
+  const firstWord = words[0]?.replace(/[^a-z]/g, "");
+  if (firstWord && ACTION_VERBS.has(firstWord)) {
+    baseScore += 2;
+    breakdown.push({ reason: "+2 strong action verb", points: 2 });
+  } else {
+    // Also check any word in bullet
+    const hasVerb = words.some((w) => ACTION_VERBS.has(w.replace(/[^a-z]/g, "")));
+    if (hasVerb) {
+      baseScore += 1;
+      breakdown.push({ reason: "+1 action verb", points: 1 });
+    }
+  }
+
+  // +3 for measurable metric (%, numbers, x improvement)
+  const hasMetric = /\d+%|\d+x|\$\d+|\d+\s*(ms|seconds|hours|days|years|users|requests)/.test(lowerBullet);
+  if (hasMetric) {
+    baseScore += 3;
+    breakdown.push({ reason: "+3 measurable metric", points: 3 });
+  }
+
+  // Diminishing returns: delta = baseScore * (1 - currentScore / 100)
+  const diminishFactor = Math.max(0.15, 1 - currentScore / 100);
+  let delta = Math.round(baseScore * diminishFactor);
+
+  // Cap per bullet
+  delta = Math.min(delta, 15);
+
+  const newScore = Math.min(100, currentScore + delta);
+  const noImpact = delta === 0;
+
+  return { delta, newScore, newlyMatched, breakdown, noImpact };
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+export interface UseResumeAnalysisReturn {
+  analysis: ResumeAnalysis | null;
+  setInitialAnalysis: (data: ResumeAnalysis, jdText?: string) => void;
+  applyBullet: (bullet: string) => BulletImpact | null;
+  isReanalyzing: boolean;
+  jdText: string;
+  history: ResumeAnalysis[];
+  lastImpact: BulletImpact | null;
+}
+
+export function useResumeAnalysis(): UseResumeAnalysisReturn {
+  const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
+  const [jdText, setJdText] = useState("");
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [lastImpact, setLastImpact] = useState<BulletImpact | null>(null);
+  const history = useRef<ResumeAnalysis[]>([]);
+  const usedKeywords = useRef<Set<string>>(new Set());
+
+  const setInitialAnalysis = useCallback((data: ResumeAnalysis, jd?: string) => {
+    setAnalysis(data);
+    if (jd) setJdText(jd);
+    history.current = [];
+    usedKeywords.current = new Set();
+    setLastImpact(null);
+  }, []);
+
+  const applyBullet = useCallback((bullet: string): BulletImpact | null => {
+    if (!analysis?.jd_match) return null;
+
+    const { jd_match_score, missing_keywords, missing_with_labels, matched_keywords, matched_with_labels } = analysis.jd_match;
+
+    // Compute impact
+    const impact = computeBulletImpact(bullet, missing_keywords, jd_match_score, usedKeywords.current);
+    setLastImpact(impact);
+
+    // Save history for undo
+    history.current.push(structuredClone(analysis));
+
+    // Mark newly matched keywords as used
+    impact.newlyMatched.forEach((kw) => usedKeywords.current.add(kw));
+
+    // Build updated keyword lists
+    const newMissing = missing_keywords.filter((kw) => !impact.newlyMatched.includes(kw));
+    const newMatched = [...matched_keywords, ...impact.newlyMatched];
+    const newMissingWithLabels = (missing_with_labels ?? []).filter(
+      (item) => !impact.newlyMatched.includes(item.keyword)
+    );
+    const newMatchedWithLabels = [
+      ...(matched_with_labels ?? []),
+      ...impact.newlyMatched.map((kw) => ({ keyword: kw, label: "Newly Added" })),
+    ];
+
+    // Show re-analyzing pulse for realism (400ms)
+    setIsReanalyzing(true);
+    setTimeout(() => {
+      setAnalysis((prev) => {
+        if (!prev?.jd_match) return prev;
+        return {
+          ...prev,
+          jd_match: {
+            ...prev.jd_match,
+            jd_match_score: impact.newScore,
+            match_label: getMatchLabel(impact.newScore),
+            matched_keywords: newMatched,
+            missing_keywords: newMissing,
+            matched_with_labels: newMatchedWithLabels,
+            missing_with_labels: newMissingWithLabels,
+            tech_matched_count: prev.jd_match.tech_matched_count + impact.newlyMatched.length,
+          },
+        };
+      });
+      setIsReanalyzing(false);
+    }, 450);
+
+    return impact;
+  }, [analysis]);
+
+  return {
+    analysis,
+    setInitialAnalysis,
+    applyBullet,
+    isReanalyzing,
+    jdText,
+    history: history.current,
+    lastImpact,
+  };
+}

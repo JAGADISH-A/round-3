@@ -5,7 +5,14 @@ from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional, List
 from app.services.resume_service import parse_resume
-from app.services.jd_matcher import match_resume_to_jd, generate_suggested_bullets
+from app.services.jd_matcher import (
+    match_resume_to_jd,
+    generate_suggested_bullets,
+    recalculate_score,
+    compute_score_delta,
+    generate_improvement_summary,
+    compute_readiness_score,
+)
 
 router = APIRouter(prefix="/resume", tags=["Resume"])
 
@@ -28,6 +35,15 @@ class BulletRewriteRequest(BaseModel):
 class SkillBulletRequest(BaseModel):
     skill: str
     role: Optional[str] = "Backend Developer"
+
+
+class ScoreUpdateRequest(BaseModel):
+    updated_resume_text: str
+    jd_text: str
+    previous_score: int
+    role: Optional[str] = "Software Engineer"
+    sections_present: Optional[List[str]] = []
+    skills_count: Optional[int] = 0
 
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
@@ -82,6 +98,40 @@ async def generate_bullet_from_skill(request: SkillBulletRequest):
         "skill": request.skill,
         "role": request.role,
         "bullet": bullets[0] if bullets else f"Worked with {request.skill} in a project context",
+    }
+
+
+@router.post("/rescore")
+async def rescore_resume(request: ScoreUpdateRequest):
+    """Re-evaluate JD match score after resume modification. Returns score delta + readiness."""
+    if not request.updated_resume_text.strip():
+        raise HTTPException(status_code=400, detail="updated_resume_text cannot be empty")
+    if not request.jd_text.strip():
+        raise HTTPException(status_code=400, detail="jd_text cannot be empty")
+
+    role = request.role or "Software Engineer"
+    new_score = recalculate_score(request.updated_resume_text, request.jd_text, role=role)
+    delta_data = compute_score_delta(request.previous_score, new_score)
+    readiness_data = compute_readiness_score(
+        jd_score=new_score,
+        sections_present=request.sections_present or [],
+        skills_count=request.skills_count or 0,
+    )
+
+    delta = delta_data["score_delta"]
+    if delta > 10:
+        micro_feedback = "Strong improvement in job alignment"
+    elif delta > 0:
+        micro_feedback = "Good improvement in resume quality"
+    elif delta == 0:
+        micro_feedback = "No significant impact from this change"
+    else:
+        micro_feedback = "This change reduced alignment with the job"
+
+    return {
+        **delta_data,
+        **readiness_data,
+        "micro_feedback": micro_feedback,
     }
 
 
@@ -142,6 +192,9 @@ IMPROVEMENTS: Added measurable impact, Used strong action verb, Aligned with bac
             "rewritten": rewritten,
             "role": request.role,
             "improvements": improvements,
+            "before": request.bullet,
+            "after": rewritten,
+            **generate_improvement_summary(request.bullet, rewritten),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Rewrite failed: {e}")
