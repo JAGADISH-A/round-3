@@ -25,6 +25,7 @@ from app.api.personas import router as personas_router
 from app.api.chat import router as mcp_chat_router
 from app.api.tts import router as tts_router
 from app.api.stt import router as stt_router
+from app.api.resume import router as resume_router
 from app.services.tts_service import sanitize_for_tts
 
 app = FastAPI(title="BumbleBee AI Intelligence", version="1.0.0")
@@ -73,6 +74,7 @@ app.include_router(personas_router, prefix="/api", tags=["MCP"])
 app.include_router(mcp_chat_router, prefix="/api", tags=["MCP"])
 app.include_router(tts_router, prefix="/api", tags=["TTS"])
 app.include_router(stt_router, prefix="/api", tags=["STT"])
+app.include_router(resume_router, prefix="/api", tags=["Resume"])
 
 # Static route for TTS audio files
 temp_tts_dir = os.path.join(tempfile.gettempdir(), "bumblebee_tts")

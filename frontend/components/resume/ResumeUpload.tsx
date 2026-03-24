@@ -20,10 +20,23 @@ interface ResumeAnalysis {
   keyword_suggestions: string[];
   improvement_checklist: { task: string; priority: string }[];
   experience_impact_score: number;
+  jd_match?: {
+    jd_match_score: number;
+    match_label: string;
+    benchmark_range?: string;
+    matched_keywords: string[];
+    missing_keywords: string[];
+    matched_with_labels?: { keyword: string; label: string }[];
+    missing_with_labels?: { keyword: string; label: string }[];
+    tech_matched_count: number;
+    tech_required_count: number;
+    action_insights?: { skill: string; type: string; message: string }[];
+    suggested_bullets?: string[];
+  } | null;
 }
 
 interface ResumeUploadProps {
-    onAnalysisComplete: (data: ResumeAnalysis) => void;
+    onAnalysisComplete: (data: ResumeAnalysis, jdText?: string) => void;
 }
 
 export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) {
@@ -32,6 +45,8 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
+  const [jdText, setJdText] = useState("");
+  const [showJdInput, setShowJdInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const roles = [
@@ -49,9 +64,12 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
 
     const formData = new FormData();
     formData.append("file", file);
+    // Use new /api/resume/upload endpoint which supports jd_text
+    const url = new URL(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"}/api/resume/upload`);
+    if (jdText.trim()) url.searchParams.set("jd_text", jdText.trim());
 
     try {
-      const res = await fetch(ENDPOINTS.RESUME_UPLOAD, {
+      const res = await fetch(url.toString(), {
         method: "POST",
         body: formData,
       });
@@ -62,7 +80,7 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
       setAnalysis(data);
       setSelectedRole(data.confirmed_role || data.inferred_role);
       localStorage.setItem("careerspark_last_resume", JSON.stringify(data));
-      onAnalysisComplete(data);
+      onAnalysisComplete(data, jdText.trim());
     } catch (err: any) {
       setError(err.message || "An error occurred.");
     } finally {
@@ -99,6 +117,37 @@ export default function ResumeUpload({ onAnalysisComplete }: ResumeUploadProps) 
 
   return (
     <div className="space-y-6">
+      {/* JD Paste Toggle */}
+      {!analysis && (
+        <div className="space-y-3">
+          <button
+            onClick={() => setShowJdInput(!showJdInput)}
+            className={`w-full flex items-center justify-between px-5 py-3 rounded-2xl border text-xs font-bold uppercase tracking-widest transition-all ${
+              showJdInput
+                ? "border-primary/30 bg-primary/5 text-primary"
+                : "border-white/5 bg-transparent text-zinc-500 hover:border-white/10"
+            }`}
+          >
+            <span>{showJdInput ? "✓ Job Description Added" : "+ Paste Job Description (Optional)"}</span>
+            <span className="text-[10px] font-mono text-zinc-600">{showJdInput ? "removes for neutral analysis" : "adds JD Match Score"}</span>
+          </button>
+          {showJdInput && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+              <textarea
+                value={jdText}
+                onChange={(e) => setJdText(e.target.value)}
+                placeholder="Paste the full job description here to get a JD Match Score alongside your ATS Score..."
+                rows={6}
+                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-xs text-zinc-300 placeholder:text-zinc-700 font-mono resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+              />
+              <p className="text-[9px] text-zinc-700 font-mono mt-1 px-1">
+                {jdText.length} chars · AI will compare keywords, tech stack, and semantic alignment
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {!analysis && !isUploading && (
         <div 
           onClick={() => fileInputRef.current?.click()}
