@@ -692,7 +692,7 @@ function ChatContent({
                       )}
                     </div>
                   )}
-                   <div className="whitespace-pre-wrap break-all font-sans text-[14px] leading-7">
+                   <div className="whitespace-pre-wrap break-words font-sans text-[14px] leading-7 min-w-0">
                     {msg.content}
                     {msg.role === "ai" && typingMessageId === i && (
                       <span className="inline-block w-1.5 h-3.5 bg-primary ml-1 animate-pulse align-middle">▌</span>
