@@ -1,6 +1,12 @@
-"""Career Readiness AI Service — FastAPI entry point."""
-
 import os
+import sys
+
+# --- BumbleBee AI - Global FFmpeg Environment Injection ---
+FFMPEG_BIN = r"C:\ffmpeg\bin"
+if FFMPEG_BIN not in os.environ["PATH"]:
+    os.environ["PATH"] = FFMPEG_BIN + os.pathsep + os.environ["PATH"]
+# ----------------------------------------------------------
+
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel

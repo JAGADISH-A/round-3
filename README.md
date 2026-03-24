@@ -1,48 +1,67 @@
-# CareerSpark AI - Interview Simulator Bot
+# BumbleBee AI - Intelligent Career Coach & Interview Simulator
 
-A technical interview simulation bot for Telegram, powered by AI Intelligence and Vision services.
+BumbleBee AI is a professional, full-stack AI-driven platform designed to help candidates prepare for technical interviews and receive personalized career guidance. It features a real-time interview simulator, voice analysis, and automated feedback.
 
-## Prerequisites
-- Python 3.11+
-- [FFmpeg](https://ffmpeg.org/) (for Voice Note handling)
-- Telegram Bot Token from [@BotFather](https://t.me/BotFather)
+---
 
-## Setup Instructions
+## 🏗️ System Architecture
 
-1.  **Clone the Repository**
-    ```bash
-    git clone <your-repo-url>
-    cd nm
-    ```
+The project is structured as a modular microservices-based system:
 
-2.  **Configure Environment Variables**
-    Copy the `.env.example` to `.env` in the `ai-service/intelligence-service/` directory:
-    ```bash
-    cp .env.example .env
-    ```
-    Edit the `.env` file and add your `TELEGRAM_BOT_TOKEN`.
+- **Frontend (`/frontend`)**: A modern Next.js dashboard for user interaction, interview simulation, and analytics.
+- **Backend Gateway (`/backend`)**: A Java/Maven-based API gateway managing communication between the frontend and AI services.
+- **Intelligence AI Service (`/ai-service/intelligence-service`)**: Python/FastAPI service handling LLM logic (LangChain), vector database (ChromaDB), and STT/TTS processing.
+- **Vision AI Service (`/ai-service/vision-service`)**: Python/FastAPI service specializing in real-time facial behavioral analysis during mock interviews.
 
-3.  **Install Dependencies**
-    Navigate to the intelligence service and set up a virtual environment:
-    ```powershell
-    cd ai-service\intelligence-service
-    python -m venv venv
-    .\venv\Scripts\activate
-    pip install -r requirements.txt
-    ```
+---
 
-4.  **Run the Bot**
-    ```powershell
-    python run_telegram_bot.py
-    ```
+## 🚀 Key Features
 
-## Usage
-- `/start`: Initialize the bot and view commands.
-- `/practice`: Begin a structured 5-question interview session.
-- `/coach`: Switch to regular AI career coaching mode (text-based).
-- `/help`: View instructions.
+- **Real-time Interview Simulation**: Practice technical and behavioral questions with an AI interviewer.
+- **Advanced Voice Pipeline**: High-accuracy STT (Whisper) and natural TTS feedback.
+- **Behavioral Vision Analysis**: Tracks eye contact and confidence during interviews.
+- **Career Roadmap Generation**: Personalized roadmaps based on resume and career goals.
+- **Automated Performance Scoring**: Get structured feedback and scores after every interaction.
 
-## AI Engine Features
-- **Strict Latency Control**: Guaranteed responses under 8 seconds.
-- **Automated Evaluation**: Real-time scoring and feedback for interview answers.
-- **Speech Pipeline**: Integrated TTS feedback for a more realistic interview feel.
+---
+
+## 🛠️ Setup & Local Development
+
+### 1. Prerequisites
+- **Node.js 18+** (Frontend)
+- **Java 17+ & Maven** (Backend Gateway)
+- **Python 3.11+** (AI Services)
+- **FFmpeg** (Required for audio processing)
+
+### 2. Environment Configuration
+Copy the root `.env.example` to `.env` and fill in your API keys (Telegram, Groq, Google Gemini, and Firebase).
+
+```bash
+cp .env.example .env
+```
+
+### 3. Installation & Startup
+
+#### Using the Hive Script (Windows)
+Run the master startup script from the root directory:
+```powershell
+.\scripts\hive_start.ps1
+```
+
+#### Manual Startup
+- **Frontend**: `cd frontend && npm install && npm run dev`
+- **Backend**: `cd backend && mvn spring-boot:run`
+- **Intelligence Service**: `cd ai-service/intelligence-service && pip install -r requirements.txt && python main.py`
+- **Vision Service**: `cd ai-service/vision-service && pip install -r requirements.txt && python main.py`
+
+---
+
+## 🔐 Security & Deployment
+
+- **Secret Management**: All API keys and sensitive tokens are managed via `.env` files and are strictly excluded from version control.
+- **Production Ready**: Follows clean code principles and modular separation for easy scaling.
+
+---
+
+## 📄 License
+This project is for internal career readiness training and development.

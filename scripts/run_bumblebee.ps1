@@ -16,12 +16,12 @@ try {
 
 # 2. Start Intelligence Service (8001)
 Write-Host "`n[INTEL] Starting Intelligence Service (8001)..." -ForegroundColor Cyan
-$intelCmd = "cd ai-service\intelligence-service; if (!(Test-Path venv\Scripts\python.exe)) { python -m venv venv }; .\venv\Scripts\python.exe -m pip install -r requirements.txt; .\venv\Scripts\python.exe main.py"
+$intelCmd = "cd ai-service\intelligence-service; if (!(Test-Path venv\Scripts\python.exe)) { python -m venv venv }; .\venv\Scripts\python.exe -m pip install -r requirements.txt; .\venv\Scripts\python.exe -m main"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $intelCmd -WindowStyle Normal
 
 # 3. Start Vision AI Service (8002)
 Write-Host "[VISION] Starting Vision AI Service (8002)..." -ForegroundColor Cyan
-$visionCmd = "cd ai-service\vision-service; if (!(Test-Path venv\Scripts\python.exe)) { python -m venv venv }; .\venv\Scripts\python.exe -m pip install -r requirements.txt; .\venv\Scripts\python.exe main.py"
+$visionCmd = "cd ai-service\vision-service; if (!(Test-Path venv\Scripts\python.exe)) { python -m venv venv }; .\venv\Scripts\python.exe -m pip install -r requirements.txt; .\venv\Scripts\python.exe -m main"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $visionCmd -WindowStyle Normal
 
 # 4. Start Next.js Frontend (3002)

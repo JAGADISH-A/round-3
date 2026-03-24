@@ -6,6 +6,9 @@ Thumbs.db
 *.bak
 *.tmp
 *.log
+*.wav
+*.mp3
+*.ogg
 
 # --- IDE Files ---
 .vscode/
@@ -16,50 +19,83 @@ Thumbs.db
 .classpath
 .settings/
 .factorypath
+.history/
+*.launch
+*.tmp
+*.bak
 
 # --- Node/Next.js (Frontend) ---
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-frontend/build/
-frontend/dist/
-frontend/tsconfig.tsbuildinfo
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+node_modules/
+**/node_modules/
+.next/
+**/ .next/
+out/
+build/
+dist/
+tsconfig.tsbuildinfo
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.npm/
 
 # --- Java/Maven (Backend Gateway) ---
-backend/target/
+target/
 **/target/
-backend/bin/
-backend/build/
-backend/.settings/
-backend/.project
-backend/.classpath
+bin/
+**/bin/
+.settings/
+.project
+.classpath
+.factorypath
 
 # --- Python (AI Services) ---
+__pycache__/
 **/__pycache__/
-**/*.py[cod]
-**/*$py.class
-**/.pytest_cache/
-**/.venv/
-**/venv/
-**/env/
-**/virtualenv/
-ai-service/intelligence-service/.env
-ai-service/vision-service/.env
-ai-service/intelligence-service/chroma_db/
-ai-service/intelligence-service/dataset/
-ai-service/intelligence-service/pip_list*.txt
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+virtualenv/
+chroma_db/
+dataset/
+pip_list*.txt
+.ipynb_checkpoints/
 
-# --- Project Specific Data ---
-careerspark_data_external/
+# --- Project Specific ---
+bot_*.log
 verify_output.txt
 verify_*.py
+test_*.wav
+temp_*/
 
-# --- Env Files (General) ---
-**/.env
-**/.env.*
+# --- Environment Files ---
+.env
+.env.*
 !.env.example
+
+# --- Compiled/Generated ---
+*.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 

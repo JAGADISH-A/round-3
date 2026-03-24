@@ -1,9 +1,40 @@
+from pydub import AudioSegment
 import os
+import sys
+
+# --- PRE-IMPORT ENVIRONMENT CONFIG ---
+# We MUST add FFmpeg to PATH before pydub is imported, 
+# otherwise pydub.utils will trigger a RuntimeWarning immediately.
+FFMPEG_BIN = r"C:\ffmpeg\bin"
+if FFMPEG_BIN not in os.environ["PATH"]:
+    os.environ["PATH"] = FFMPEG_BIN + os.pathsep + os.environ["PATH"]
+
+# Set converter immediately
+AudioSegment.converter = r"C:\ffmpeg\bin\ffmpeg.exe"
+AudioSegment.ffprobe = r"C:\ffmpeg\bin\ffprobe.exe"
 import tempfile
 import uuid
+import logging
+import asyncio
 from faster_whisper import WhisperModel
 import imageio_ffmpeg as ffmpeg
-from pydub import AudioSegment
+
+# --- FFmpeg Configuration (Mandatory for Windows STT Pipeline) ---
+FFMPEG_PATH = "C:\\ffmpeg\\bin\\ffmpeg.exe"
+FFPROBE_PATH = "C:\\ffmpeg\\bin\\ffprobe.exe"
+
+if not os.path.exists(FFMPEG_PATH):
+    raise RuntimeError(f"FFmpeg not found at {FFMPEG_PATH}")
+
+if not os.path.exists(FFPROBE_PATH):
+    raise RuntimeError(f"FFprobe not found at {FFPROBE_PATH}")
+
+AudioSegment.converter = FFMPEG_PATH
+AudioSegment.ffprobe   = FFPROBE_PATH
+# -----------------------------------------------------------------
+
+# Prevent OpenMP runtime conflict errors
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 class STTService:
     _instance = None
@@ -12,16 +43,21 @@ class STTService:
         if cls._instance is None:
             cls._instance = super(STTService, cls).__new__(cls)
             cls._instance.model = None
-            # Set ffmpeg path explicitly for pydub to prevent path resolution issues
-            AudioSegment.converter = ffmpeg.get_ffmpeg_exe()
         return cls._instance
 
     def _get_model(self):
         if self.model is None:
             # CPU Optimized inference with int8 computes natively faster
-            print("[STT] Loading Whisper Model (CPU)...")
+            logger = logging.getLogger(__name__)
+            logger.info("[STT] Loading Whisper Model (CPU)...")
+            from faster_whisper import WhisperModel
             self.model = WhisperModel("tiny", device="cpu", compute_type="int8")
         return self.model
+
+    async def warmup(self):
+        """Pre-loads the model to avoid latency on the first request."""
+        import asyncio
+        await asyncio.to_thread(self._get_model)
 
     import asyncio
     
@@ -50,13 +86,25 @@ class STTService:
 
         try:
             logger.info(f"[STT] 1. Saving voice payload to temp file: {input_path}")
-            # 1. Save raw incoming bytes to temp file
+            # Ensure the bytes are valid
+            if not audio_bytes:
+                logger.error("[STT] Received EMPTY audio bytes!")
+                return ""
+            
             with open(input_path, "wb") as f:
                 f.write(audio_bytes)
 
-            logger.info("[STT] 2. Processing via pydub to standard 16kHz WAV format.")
+            file_size = os.path.getsize(input_path)
+            logger.info(f"[STT] 2. Payload size: {file_size} bytes. Using converter: {AudioSegment.converter}")
+            
             # 2. Convert to 16kHz WAV using pydub
-            audio = AudioSegment.from_file(input_path)
+            try:
+                audio = AudioSegment.from_file(input_path)
+                logger.info(f"[STT] 3. Audio loaded. Duration: {len(audio)/1000:.2f}s")
+            except Exception as pydub_err:
+                logger.error(f"[STT] FFmpeg/Pydub FAILED to load audio: {pydub_err}")
+                raise pydub_err
+
             audio = audio.set_frame_rate(16000).set_channels(1)
             audio.export(wav_path, format="wav")
 
@@ -76,11 +124,14 @@ class STTService:
             raise e
 
         finally:
-            # Clean up temp files
+            # Clean up temp files with retry/safety
             logger.info("[STT] 5. Cleaning up temp files.")
-            if os.path.exists(input_path):
-                os.remove(input_path)
-            if os.path.exists(wav_path):
-                os.remove(wav_path)
+            for p in [input_path, wav_path]:
+                if os.path.exists(p):
+                    try:
+                        # Close any potential handles (though pydub/whisper should have closed them)
+                        os.remove(p)
+                    except Exception as clean_err:
+                        logger.warning(f"[STT] Cleanup failed for {p}: {clean_err}")
 
 stt_service = STTService()
