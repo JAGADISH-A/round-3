@@ -349,3 +349,56 @@ def compute_readiness_score(
         label = "Beginner"
 
     return {"resume_readiness": readiness, "readiness_label": label}
+
+
+def segment_and_score_resume(text: str, jd_text: str) -> List[Dict[str, Any]]:
+    """
+    Split resume text into segments and score each based on rule-based criteria.
+    Criteria: Tech Keyword (+40), Action Verb (+25), Metric (+35).
+    """
+    if not text.strip():
+        return []
+
+    # Robust segmentation: boundaries or line breaks
+    import re
+    segments_raw = re.split(r'(?<=[.!?])\s+|\n+', text)
+    segments = [s.strip() for s in segments_raw if s.strip()]
+    
+    scored_segments = []
+    jd_tokens = set(_tokenize(jd_text))
+
+    for seg in segments:
+        score = 0
+        seg_lower = seg.lower()
+        seg_tokens = set(_tokenize(seg))
+
+        # 1. Tech Keyword (+40) - Matches JD or global tech boost
+        matched_tech = seg_tokens & (jd_tokens | _TECH_BOOST)
+        if matched_tech:
+            score += 40
+
+        # 2. Action Verb (+25)
+        if any(verb in seg_lower for verb in _ACTION_VERBS):
+            score += 25
+
+        # 3. Metric (+35)
+        if _METRIC_PATTERN.search(seg):
+            score += 35
+
+        score = min(score, 100)
+        
+        # Label Mapping
+        if score < 30:
+            label = "weak"
+        elif score <= 70:
+            label = "moderate"
+        else:
+            label = "strong"
+
+        scored_segments.append({
+            "text": seg,
+            "score": score,
+            "label": label
+        })
+
+    return scored_segments

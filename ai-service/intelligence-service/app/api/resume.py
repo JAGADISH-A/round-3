@@ -117,6 +117,10 @@ async def rescore_resume(request: ScoreUpdateRequest):
         sections_present=request.sections_present or [],
         skills_count=request.skills_count or 0,
     )
+    
+    # Live Heatmap Segments
+    from app.services.jd_matcher import segment_and_score_resume
+    text_segments = segment_and_score_resume(request.updated_resume_text, request.jd_text)
 
     delta = delta_data["score_delta"]
     if delta > 10:
@@ -132,6 +136,7 @@ async def rescore_resume(request: ScoreUpdateRequest):
         **delta_data,
         **readiness_data,
         "micro_feedback": micro_feedback,
+        "text_segments": text_segments,
     }
 
 
