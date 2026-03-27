@@ -299,6 +299,7 @@ export const useResumeStore = create<ResumeStoreState>()(
 
       resetStore: () => {
         set({
+          status: 'IDLE',
           analysis: null,
           jdText: "",
           isEditMode: false,

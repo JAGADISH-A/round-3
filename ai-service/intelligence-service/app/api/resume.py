@@ -46,6 +46,14 @@ class ScoreUpdateRequest(BaseModel):
     skills_count: Optional[int] = 0
 
 
+class ResumeRoleRequest(BaseModel):
+    full_text: str
+    target_role: str
+    jd_text: Optional[str] = None
+    skills_count: Optional[int] = 0
+    sections_present: Optional[List[str]] = []
+
+
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
 @router.post("/upload")
@@ -87,12 +95,55 @@ async def upload_and_analyze(
     return analysis
 
 
+@router.post("/analyze-role")
+async def analyze_role(request: ResumeRoleRequest):
+    """Re-analyze existing resume text for a new target role."""
+    from app.services.resume_service import _compute_local_analysis
+    
+    # 1. Perform analysis for the new role
+    # Note: Using local analysis for immediate response as per frontend expectation
+    analysis = _compute_local_analysis(request.full_text, request.target_role)
+    
+    # 2. If JD text provided, perform JD match
+    jd_score = 0
+    if request.jd_text and request.jd_text.strip():
+        try:
+            jd_match = match_resume_to_jd(request.full_text, request.jd_text, role=request.target_role)
+            jd_score = jd_match.get("jd_match_score", 0)
+            analysis["jd_match"] = jd_match
+        except Exception as e:
+            print(f"[API] JD Match failed in analyze-role: {e}")
+            analysis["jd_match"] = None
+    else:
+        analysis["jd_match"] = None
+
+    # 3. Calculate Readiness Score
+    try:
+        skills_count = request.skills_count if request.skills_count and request.skills_count > 0 else len(analysis.get("skills", []))
+        sections_present = request.sections_present if request.sections_present and len(request.sections_present) > 0 else analysis.get("sections", [])
+        
+        # If still empty (local parser limitation), provide safe baseline for readiness computation
+        if not sections_present:
+            sections_present = ["experience", "education", "skills"]
+            
+        ready = compute_readiness_score(jd_score, sections_present, skills_count)
+        analysis["readiness_score"] = ready["resume_readiness"]
+        analysis["industry_readiness"] = ready["readiness_label"]
+    except Exception as e:
+        print(f"[API] Error computing readiness in analyze-role: {e}")
+        analysis["readiness_score"] = 0
+        analysis["industry_readiness"] = "Beginner"
+
+    analysis["confirmed_role"] = request.target_role
+    return analysis
+
+
 @router.post("/jd-match")
 async def jd_match(request: JDMatchRequest):
     """Match resume text against a JD. Returns full action engine output."""
-    if not request.resume_text.strip():
+    if not request.resume_text or not request.resume_text.strip():
         raise HTTPException(status_code=400, detail="resume_text cannot be empty")
-    if not request.jd_text.strip():
+    if not request.jd_text or not request.jd_text.strip():
         raise HTTPException(status_code=400, detail="jd_text cannot be empty")
 
     try:

@@ -23,6 +23,16 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
   const [jdText, setJdText] = useState("");
   const [showJdInput, setShowJdInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const globalAnalysis = useResumeStore((state) => state.analysis);
+
+  React.useEffect(() => {
+    if (!globalAnalysis) {
+      setAnalysis(null);
+      setError(null);
+      setShowJdInput(false);
+    }
+  }, [globalAnalysis]);
 
   const roles = useMemo(() => [
     "Frontend Developer", "Backend Developer", "Full Stack Developer",

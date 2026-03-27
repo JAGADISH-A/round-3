@@ -122,6 +122,7 @@ export default function ResumePage() {
       strength_score: analysis.strength_score ?? 0,
       experience_impact_score: analysis.experience_impact_score ?? 0,
       industry_readiness: analysis.industry_readiness ?? "Beginner",
+      readiness_score: analysis.readiness_score ?? 0,
       confirmed_role: analysis.confirmed_role || analysis.inferred_role || "Unknown Role"
     };
   }, [analysis]);
@@ -162,9 +163,11 @@ export default function ResumePage() {
       { subject: 'Skills', A: normalizedAnalysis.strength_score, fullMark: 100 },
       { subject: 'ATS Score', A: normalizedAnalysis.ats_score, fullMark: 100 },
       { subject: 'Impact', A: normalizedAnalysis.experience_impact_score, fullMark: 100 },
-      { subject: 'Readiness', A: normalizedAnalysis.industry_readiness === "Expert" ? 100 : 
-                                 normalizedAnalysis.industry_readiness === "Advanced" ? 80 : 
-                                 normalizedAnalysis.industry_readiness === "Intermediate" ? 60 : 40, fullMark: 100 },
+      { subject: 'Readiness', A: normalizedAnalysis.readiness_score || (
+          normalizedAnalysis.industry_readiness === "Strong Candidate" ? 95 : 
+          normalizedAnalysis.industry_readiness === "Interview Ready" ? 80 : 
+          normalizedAnalysis.industry_readiness === "Improving" ? 60 : 40
+      ), fullMark: 100 },
       { subject: 'Projects', A: Math.min((normalizedAnalysis.projects?.length || 0) * 20, 100), fullMark: 100 },
     ];
   }, [normalizedAnalysis]);
@@ -301,18 +304,23 @@ export default function ResumePage() {
                       </div>
                     </div>
 
-                    <MetricCard 
-                      label="JD Match Score" 
-                      value={normalizedAnalysis.jd_match?.jd_match_score || 0} 
-                      icon={<Target />} 
-                      color="#FFD600" 
-                      desc={normalizedAnalysis.jd_match?.match_label || "Analyzing..."}
-                    />
+                    {normalizedAnalysis.jd_match && (
+                      <MetricCard 
+                        label="JD Match Score" 
+                        value={normalizedAnalysis.jd_match.jd_match_score || 0} 
+                        icon={<Target />} 
+                        color="#FFD600" 
+                        desc={normalizedAnalysis.jd_match.match_label || "Analyzing..."}
+                      />
+                    )}
 
                     <div className="bg-zinc-900 overflow-hidden font-grotesk">
                       <ReadinessScoreCard 
-                        readiness={readiness?.score ?? (normalizedAnalysis.industry_readiness === "Expert" ? 95 : normalizedAnalysis.industry_readiness === "Advanced" ? 80 : 60)} 
-                        label={readiness?.label ?? normalizedAnalysis.industry_readiness} 
+                        readiness={readiness?.score || normalizedAnalysis.readiness_score || (
+                          normalizedAnalysis.industry_readiness === "Strong Candidate" ? 95 : 
+                          normalizedAnalysis.industry_readiness === "Interview Ready" ? 80 : 60
+                        )} 
+                        label={readiness?.label || normalizedAnalysis.industry_readiness} 
                         delta={readiness?.delta}
                       />
                     </div>
