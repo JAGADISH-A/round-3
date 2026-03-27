@@ -11,41 +11,14 @@ import FirstImprovementModal from "@/components/resume/FirstImprovementModal";
 import { useImprovementTracker } from "@/hooks/useImprovementTracker";
 import { useScoreFeedback } from "@/hooks/useScoreFeedback";
 import { useResumeAnalysis } from "@/hooks/useResumeAnalysis";
+import { useResumeStore } from "@/store/useResumeStore";
 import LiveEditor from "@/components/resume/LiveEditor";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Target, Zap, ShieldCheck, AlertCircle, CheckCircle2, Award, TrendingUp, Search, Layers, ClipboardList, RotateCcw, BrainCircuit, MessageSquare, History as HistoryIcon, Crosshair, Lightbulb, ArrowRight, Sparkles, MousePointerClick, Wand2, Edit3, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-interface ResumeAnalysis {
-  full_text: string;
-  inferred_role: string;
-  confirmed_role?: string;
-  skills: string[];
-  education: { degree: string; institution: string; year: string }[];
-  experience: { title: string; company: string; duration: string; impact: string }[];
-  projects: { name: string; tech_stack: string[]; description: string }[];
-  ats_score: number;
-  strength_score: number;
-  industry_readiness: string;
-  skill_gap: string[];
-  keyword_suggestions: string[];
-  improvement_checklist: { task: string; priority: string }[];
-  experience_impact_score: number;
-  jd_match?: {
-    jd_match_score: number;
-    match_label: string;
-    benchmark_range?: string;
-    matched_keywords: string[];
-    missing_keywords: string[];
-    matched_with_labels?: { keyword: string; label: string }[];
-    missing_with_labels?: { keyword: string; label: string }[];
-    tech_matched_count: number;
-    tech_required_count: number;
-    action_insights?: { skill: string; type: string; message: string }[];
-    suggested_bullets?: string[];
-  } | null;
-}
+import { ResumeAnalysis } from "@/types/resume";
 
 export default function ResumePage() {
   const { 
@@ -53,12 +26,17 @@ export default function ResumePage() {
     setInitialAnalysis, 
     applyBullet, 
     isReanalyzing, 
-    lastImpact 
+    lastImpact,
+    jdText
   } = useResumeAnalysis();
+
+  const status = useResumeStore((state) => state.status);
+  const setStatus = useResumeStore((state) => state.setStatus);
+  const resumeText = useResumeStore((state) => state.resumeText);
+  const _hasHydrated = useResumeStore((state) => state._hasHydrated);
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [rewriterBullet, setRewriterBullet] = useState("");
-  const [storedJdText, setStoredJdText] = useState("");
 
   const [readiness, setReadiness] = useState<{ score: number; label: string; delta?: number } | null>(null);
   const [firstImprovementDelta, setFirstImprovementDelta] = useState(0);
@@ -69,13 +47,47 @@ export default function ResumePage() {
 
   const handleAnalysisComplete = (data: ResumeAnalysis, jdText?: string) => {
     setInitialAnalysis(data, jdText);
-    if (jdText) setStoredJdText(jdText);
-    const jdScore = data.jd_match?.jd_match_score ?? 0;
+    const jdScore = data.jd_match?.jd_match_score ?? data.jd_match?.score ?? 0;
     currentScoreRef.current = jdScore;
     tracker.resetSession(jdScore);
     setReadiness(null);
     setFirstImprovementDelta(0);
   };
+
+  // ─── Recovery Logic ─────────────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (!_hasHydrated) return;
+    
+    const triggerRecovery = async () => {
+      if (resumeText && !analysis && status === 'IDLE') {
+        console.log("RECOVERY: Resume text exists but no analysis. Triggering...");
+        setStatus('LOADING');
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+          const res = await fetch(`${apiUrl}/api/resume/analyze`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              text: resumeText,
+              jd_text: jdText || "" 
+            }),
+          });
+          const data = await res.json();
+          if (data.error) {
+            console.error("Recovery analysis failed:", data.error);
+            useResumeStore.getState().resetStore();
+            return;
+          }
+          handleAnalysisComplete(data, jdText);
+        } catch (err) {
+          console.error("Recovery failed:", err);
+          setStatus('IDLE');
+        }
+      }
+    };
+
+    triggerRecovery();
+  }, [_hasHydrated, resumeText, analysis, status, jdText, setStatus]);
 
   const handleScoreUpdate = React.useCallback((
     delta: number,
@@ -130,8 +142,8 @@ export default function ResumePage() {
     }
   }, [normalizedAnalysis]);
 
-  const onBulletAccepted = React.useCallback((text: string) => {
-    const impact = applyBullet(text);
+  const onBulletAccepted = React.useCallback((text: string, original?: string, skipUpdate?: boolean) => {
+    const impact = applyBullet(text, original, skipUpdate);
     if (impact) {
       handleScoreUpdate(
         impact.delta,
@@ -175,11 +187,20 @@ export default function ResumePage() {
         {normalizedAnalysis && (
           <div className="flex items-center gap-4">
             <button 
+              onClick={() => useResumeStore.getState().resetStore()}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all mr-2"
+              title="Clear session and start fresh"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset
+            </button>
+
+            <button 
               onClick={() => setIsEditMode(!isEditMode)}
               className={cn(
                 "flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border",
                 isEditMode 
-                  ? "bg-amber-500/10 border-amber-500/20 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]" 
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-500 shadow-[0_0_158px_rgba(245,158,11,0.2)]" 
                   : "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
               )}
             >
@@ -189,15 +210,7 @@ export default function ResumePage() {
 
             <button 
               onClick={() => {
-                const context = {
-                  type: "resume",
-                  role: normalizedAnalysis.confirmed_role,
-                  summary: "Resume analyzed for " + normalizedAnalysis.confirmed_role,
-                  strengths: normalizedAnalysis.skills.slice(0, 5),
-                  weaknesses: normalizedAnalysis.skill_gap,
-                  suggestions: normalizedAnalysis.improvement_checklist.map(i => i.task)
-                };
-                sessionStorage.setItem("careerspark_analysis_context", JSON.stringify(context));
+                sessionStorage.setItem("careerspark_analysis_context", JSON.stringify({ trigger: true }));
                 window.location.href = "/chat?persona=resume_reviewer";
               }}
               className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,214,0,0.2)]"
@@ -216,16 +229,26 @@ export default function ResumePage() {
       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar relative">
         <div className="max-w-7xl mx-auto space-y-12 pb-24">
           
-          {isEditMode && normalizedAnalysis ? (
+          {!_hasHydrated ? (
+             <div className="flex-1 flex items-center justify-center">
+               <div className="animate-pulse text-zinc-500 font-mono text-xs uppercase tracking-widest">Hydrating Session...</div>
+             </div>
+          ) : isEditMode && normalizedAnalysis ? (
             <LiveEditor 
               initialText={normalizedAnalysis.full_text}
               initialScore={normalizedAnalysis.jd_match?.jd_match_score ?? 0}
-              jdText={storedJdText}
+              jdText={jdText}
               onExit={() => setIsEditMode(false)}
             />
           ) : (
             <>
-              <section className={cn("transition-all duration-700", analysis ? "opacity-0 h-0 overflow-hidden" : "opacity-100 mb-12")}>
+              {status === 'LOADING' && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex items-center justify-center">
+                  <ReanalyzeLoader visible={true} />
+                </div>
+              )}
+
+              <section className={cn("transition-all duration-700", (analysis || status === 'LOADING') ? "opacity-0 h-0 overflow-hidden" : "opacity-100 mb-12")}>
                 <div className="mb-6 text-center">
                   <p className="text-zinc-500 text-xs font-medium">Upload your PDF resume to get an instant AI-powered performance analysis.</p>
                 </div>
@@ -394,7 +417,7 @@ export default function ResumePage() {
                       )}
 
                       <div className="lg:col-span-12" id="bullet-rewriter-section">
-                        <BulletRewriter targetRole={normalizedAnalysis.confirmed_role || normalizedAnalysis.inferred_role} externalBullet={rewriterBullet} jdText={storedJdText} resumeText={normalizedAnalysis.full_text} previousScore={currentScoreRef.current} onScoreUpdate={handleScoreUpdate} onBulletAccepted={onBulletAccepted} />
+                        <BulletRewriter targetRole={normalizedAnalysis.confirmed_role || normalizedAnalysis.inferred_role} externalBullet={rewriterBullet} jdText={jdText} resumeText={normalizedAnalysis.full_text} previousScore={currentScoreRef.current} onScoreUpdate={handleScoreUpdate} onBulletAccepted={onBulletAccepted} />
                       </div>
                     </>
                   )}

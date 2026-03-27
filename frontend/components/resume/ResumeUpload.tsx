@@ -4,45 +4,20 @@ import React, { useState, useRef, useMemo } from "react";
 import { Upload, X, CheckCircle, Loader2, Target, Briefcase, GraduationCap, Code2, AlertCircle, RefreshCcw, ChevronDown } from "lucide-react";
 import { ENDPOINTS } from "@/lib/api-config";
 import { cn } from "@/lib/utils";
-
-interface ResumeAnalysis {
-  full_text: string;
-  inferred_role: string;
-  confirmed_role?: string;
-  skills: string[];
-  education: { degree: string; institution: string; year: string }[];
-  experience: { title: string; company: string; duration: string; impact: string }[];
-  projects: { name: string; tech_stack: string[]; description: string }[];
-  ats_score: number;
-  strength_score: number;
-  industry_readiness: string;
-  skill_gap: string[];
-  keyword_suggestions: string[];
-  improvement_checklist: { task: string; priority: string }[];
-  experience_impact_score: number;
-  jd_match?: {
-    jd_match_score: number;
-    match_label: string;
-    benchmark_range?: string;
-    matched_keywords: string[];
-    missing_keywords: string[];
-    matched_with_labels?: { keyword: string; label: string }[];
-    missing_with_labels?: { keyword: string; label: string }[];
-    tech_matched_count: number;
-    tech_required_count: number;
-    action_insights?: { skill: string; type: string; message: string }[];
-    suggested_bullets?: string[];
-  } | null;
-}
+import { ResumeAnalysis } from "@/types/resume";
+import { useResumeStore } from "@/store/useResumeStore";
 
 interface ResumeUploadProps {
     onAnalysisComplete: (data: ResumeAnalysis, jdText?: string) => void;
 }
 
 const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
+  const setStatus = useResumeStore((state) => state.setStatus);
+  const setIsReanalyzingGlobal = useResumeStore((state) => state.setIsReanalyzing);
+  
+  const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [jdText, setJdText] = useState("");
@@ -60,12 +35,13 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
     if (!file) return;
 
     setIsUploading(true);
+    setStatus('LOADING');
     setError(null);
 
     const formData = new FormData();
     formData.append("file", file);
     // Use new /api/resume/upload endpoint which supports jd_text
-    const url = new URL(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"}/api/resume/upload`);
+    const url = new URL(ENDPOINTS.RESUME_UPLOAD);
     if (jdText.trim()) url.searchParams.set("jd_text", jdText.trim());
 
     try {
@@ -77,20 +53,26 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
       if (!res.ok) throw new Error("Neural Link Failed: Could not parse resume.");
       
       const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+        setStatus('ERROR');
+        return;
+      }
       setAnalysis(data);
       setSelectedRole(data.confirmed_role || data.inferred_role);
-      localStorage.setItem("careerspark_last_resume", JSON.stringify(data));
       onAnalysisComplete(data, jdText.trim());
     } catch (err: any) {
       setError(err.message || "An error occurred.");
     } finally {
       setIsUploading(false);
+      // Status will be set to ANALYZED by onAnalysisComplete -> setInitialAnalysis -> setAnalysis
     }
   };
 
   const handleRoleReanalyze = async (newRole: string) => {
     if (!analysis) return;
     setIsReanalyzing(true);
+    setIsReanalyzingGlobal(true);
     setSelectedRole(newRole);
 
     try {
@@ -106,7 +88,6 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
       if (!res.ok) throw new Error("Re-analysis failed.");
       const data = await res.json();
       setAnalysis(data);
-      localStorage.setItem("careerspark_last_resume", JSON.stringify(data));
       onAnalysisComplete(data);
     } catch (err: any) {
       setError("Failed to re-analyze for the new role.");
@@ -264,18 +245,20 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
                     {normalized.experience.length === 0 && <p className="text-xs text-zinc-600 italic">No professional experience detected</p>}
                 </div>
 
-                <div className="pt-4 flex items-center justify-between">
-                     <div className="flex flex-col">
-                        <span className="text-[10px] uppercase text-zinc-600 font-bold">Project Pulse</span>
-                        <span className="text-sm font-bold text-white">{normalized.projects.length} Active Modules</span>
-                     </div>
-                     <button 
-                        onClick={() => { setAnalysis(null); setError(null); }}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all group"
-                     >
-                        <RefreshCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
-                     </button>
-                </div>
+                 <div className="pt-4 flex items-center justify-between">
+                      <div className="flex flex-col">
+                         <span className="text-[10px] uppercase text-zinc-600 font-bold">Project Pulse</span>
+                         <span className="text-sm font-bold text-white">{normalized.projects.length} Active Modules</span>
+                      </div>
+                      <button 
+                         onClick={() => { 
+                           useResumeStore.getState().resetStore();
+                         }}
+                         className="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all group"
+                      >
+                         <RefreshCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
+                      </button>
+                 </div>
             </div>
         </div>
       )}

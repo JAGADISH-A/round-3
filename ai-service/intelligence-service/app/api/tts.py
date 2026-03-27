@@ -31,16 +31,16 @@ async def generate_voice(request: TTSRequest, background_tasks: BackgroundTasks)
         print(f"TTS Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/tts/stream")
-async def generate_voice_stream(request: TTSRequest):
+@router.get("/tts/stream")
+async def generate_voice_stream(text: str, lang: str = "en"):
     """
     Real-time streaming endpoint for TTS. 
     Yields MPEG audio bytes as they are synthesized.
     """
     try:
-        lang_code = "ta" if request.lang == "ta" else "en"
+        lang_code = "ta" if lang == "ta" else "en"
         return StreamingResponse(
-            tts_service.generate_tts_stream(request.text, lang_code), 
+            tts_service.generate_tts_stream(text, lang_code), 
             media_type="audio/mpeg"
         )
     except Exception as e:

@@ -21,6 +21,7 @@ import { useTTS } from "@/hooks/useTTS";
 import { translations } from "@/lib/translations";
 import { useMemo } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { useResumeStore } from "@/store/useResumeStore";
 
 interface Message {
   role: "user" | "ai";
@@ -294,6 +295,20 @@ Provide helpful interview coaching feedback.`;
         }
       } catch (e) { console.error("Failed to parse user profile", e); }
 
+      let dynamicAnalysisContext = analysisContext;
+      if (selectedPersona === "resume_reviewer") {
+        const storeState = useResumeStore.getState();
+        dynamicAnalysisContext = {
+          type: "resume",
+          role: storeState.analysis?.confirmed_role || "Software Engineer",
+          summary: "Resume analyzed for " + (storeState.analysis?.confirmed_role || "Software Engineer"),
+          strengths: storeState.analysis?.skills?.slice(0, 5) || [],
+          weaknesses: storeState.analysis?.skill_gap || [],
+          suggestions: storeState.analysis?.improvement_checklist?.map((i: any) => i.task) || [],
+          resume_text: storeState.resumeText || storeState.analysis?.full_text || "",
+        };
+      }
+
       const res = await fetch(ENDPOINTS.MCP_CHAT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -303,7 +318,7 @@ Provide helpful interview coaching feedback.`;
           persona: selectedPersona,
           tone: selectedTone,
           session_id: currentId,
-          analysis_context: analysisContext,
+          analysis_context: dynamicAnalysisContext,
           lang: inputLang,    // always use locally-captured lang NOT stale activeLang state
           intent: detectedIntent,
           user_profile: userProfile
@@ -444,6 +459,8 @@ Provide helpful interview coaching feedback.`;
         isVoiceEnabled={isVoiceEnabled}
         onVoiceToggle={setIsVoiceEnabled}
         t={t}
+        speak={speak}
+        activeLang={activeLang}
       />
     </Suspense>
   );
@@ -483,7 +500,9 @@ function ChatContent({
   isVoiceEnabled,
   onVoiceToggle,
   t,
-  initialPersona
+  initialPersona,
+  speak,
+  activeLang
 }: any) {
   // Handle Analysis Context Handoff
   useEffect(() => {
@@ -698,7 +717,18 @@ function ChatContent({
                       <span className="inline-block w-1.5 h-3.5 bg-primary ml-1 animate-pulse align-middle">▌</span>
                     )}
                   </div>
-                  <div className="mt-2 text-[9px] font-mono opacity-25">{msg.timestamp}</div>
+                  <div className="mt-2 flex items-center justify-between opacity-50">
+                    <span className="text-[9px] font-mono opacity-50">{msg.timestamp}</span>
+                    {msg.role === "ai" && (
+                      <button
+                        onClick={() => speak(msg.content, (msg.lang as "en" | "ta") || activeLang)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/10 transition-colors text-[9px] uppercase tracking-widest font-bold text-zinc-300"
+                        title="Read message aloud"
+                      >
+                         <Volume2 className="w-3 h-3" /> Play
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Interactive Roadmap Options (JSON-Based) */}

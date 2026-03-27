@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useResumeStore } from '../store/useResumeStore';
+import { ENDPOINTS } from '../lib/api-config';
 import { ResumeAnalysis } from './useResumeAnalysis';
 
 export interface TextSegment {
@@ -16,9 +18,11 @@ export interface LiveResumeState {
   isAnalyzing: boolean;
 }
 
-export function useLiveResume(initialText: string, initialScore: number, jdText: string) {
-  const [state, setState] = useState<LiveResumeState>({
-    resumeText: initialText,
+export function useLiveResume(jdText: string, initialScore: number) {
+  const resumeText = useResumeStore((state) => state.resumeText);
+  const analysis = useResumeStore((state) => state.analysis);
+  
+  const [state, setState] = useState<Omit<LiveResumeState, 'resumeText'>>({
     score: initialScore,
     delta: 0,
     readiness: 0,
@@ -29,13 +33,9 @@ export function useLiveResume(initialText: string, initialScore: number, jdText:
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef<number>(0);
 
-  const updateResume = useCallback((text: string) => {
-    setState((prev) => ({ ...prev, resumeText: text, isAnalyzing: true }));
-  }, []);
-
   useEffect(() => {
     // If text is empty, reset
-    if (!state.resumeText.trim()) {
+    if (!resumeText.trim()) {
       setState(prev => ({
         ...prev,
         score: 0,
@@ -57,15 +57,17 @@ export function useLiveResume(initialText: string, initialScore: number, jdText:
       abortControllerRef.current = new AbortController();
 
       try {
-        const response = await fetch('http://localhost:8001/resume/rescore', {
+        const response = await fetch(ENDPOINTS.RESCORE, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           signal: abortControllerRef.current.signal,
           body: JSON.stringify({
-            updated_resume_text: state.resumeText,
+            updated_resume_text: resumeText,
             jd_text: jdText,
             previous_score: initialScore,
-            role: "Software Engineer", // Can be dynamic if needed
+            role: analysis?.confirmed_role || "Software Engineer",
+            skills_count: analysis?.skills?.length || 0,
+            sections_present: analysis?.sections || [],
           }),
         });
 
@@ -83,10 +85,17 @@ export function useLiveResume(initialText: string, initialScore: number, jdText:
             textSegments: data.text_segments || [],
             isAnalyzing: false,
           }));
+          
+          // Sync with global store so Dashboard and Chat receive updates
+          useResumeStore.getState().setLiveScore(
+            data.new_score,
+            data.score_delta,
+            data.resume_readiness,
+            data.text_segments || []
+          );
         }
       } catch (err: any) {
         if (err.name === 'AbortError') {
-          // Ignore aborted requests
           return;
         }
         console.error('Live Rescore Error:', err);
@@ -97,10 +106,9 @@ export function useLiveResume(initialText: string, initialScore: number, jdText:
     return () => {
       clearTimeout(debounceTimer);
     };
-  }, [state.resumeText, jdText, initialScore]);
+  }, [resumeText, jdText, initialScore]);
 
   return {
     ...state,
-    updateResume,
   };
 }

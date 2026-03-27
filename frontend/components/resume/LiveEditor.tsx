@@ -1,21 +1,23 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { jsPDF } from "jspdf";
 import { useLiveResume, TextSegment } from '@/hooks/useLiveResume';
+import { useResumeStore } from '@/store/useResumeStore';
 import ReadinessScoreCard from './ReadinessScoreCard';
 import ImprovementFeedPanel from './ImprovementFeedPanel';
 import ScoreDeltaBadge from './ScoreDeltaBadge';
 import { cn } from '@/lib/utils';
 import {
   Edit3, Eye, EyeOff, Zap, Sparkles, Search,
-  Save, Download, X, CheckCircle2, Info, TrendingUp
+  Save, Download, X, CheckCircle2, Info, TrendingUp, RotateCcw
 } from 'lucide-react';
 
 interface LiveEditorProps {
-  initialText: string;
-  initialScore: number;
-  jdText: string;
-  onExit: () => void;
+  initialText?: string;
+  initialScore?: number;
+  jdText?: string;
+  onExit?: () => void;
 }
 
 // ─── Simple toast state helper ────────────────────────────────────────────────
@@ -29,10 +31,19 @@ function useToast() {
 }
 
 export default function LiveEditor({ initialText, initialScore, jdText, onExit }: LiveEditorProps) {
-  const { resumeText, updateResume, score, delta, readiness, textSegments, isAnalyzing } =
-    useLiveResume(initialText, initialScore, jdText);
+  const resumeText = useResumeStore((s) => s.resumeText);
+  const setResumeText = useResumeStore((s) => s.setResumeText);
+  
+  // Debug: Validate full resume is loaded
+  useEffect(() => {
+    console.log("Editor render:", resumeText?.length || 0);
+  }, [resumeText]);
+
+  const { score, delta, readiness, textSegments, isAnalyzing } =
+    useLiveResume(jdText ?? "", initialScore ?? 0);
 
   const [showHeatmap, setShowHeatmap] = useState(true);
+
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [hasEdited, setHasEdited] = useState(false);
   const [improvedReminder, setImprovedReminder] = useState(false);
@@ -42,10 +53,10 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
   const { toast, show: showToast } = useToast();
 
   // Track first edit
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!hasEdited) setHasEdited(true);
-    updateResume(e.target.value);
-  }, [hasEdited, updateResume]);
+    setResumeText(e.target.value);
+  };
 
   // Show save reminder when score improves
   useEffect(() => {
@@ -74,16 +85,39 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
     }
   }, [resumeText, showToast]);
 
-  // ── Download as .txt ───────────────────────────────────────────────────────
+  // ── Download as PDF ───────────────────────────────────────────────────────
   const handleDownload = useCallback(() => {
-    const blob = new Blob([resumeText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `resume_${new Date().toISOString().slice(0, 10)}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Resume downloaded', 'success');
+    if (!resumeText.trim()) {
+      showToast('Resume is empty', 'info');
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("CURRICULUM VITAE", 105, 20, { align: "center" });
+      
+      // Divider line
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, 25, 190, 25);
+      
+      // Content
+      doc.setFont("times", "normal");
+      doc.setFontSize(11);
+      
+      const lines = doc.splitTextToSize(resumeText, 170);
+      doc.text(lines, 20, 35);
+      
+      const dateStr = new Date().toISOString().slice(0, 10);
+      doc.save(`resume_${dateStr}.pdf`);
+      showToast('PDF downloaded successfully', 'success');
+    } catch (error) {
+      console.error('PDF Generation failed:', error);
+      showToast('PDF generation failed', 'info');
+    }
   }, [resumeText, showToast]);
 
   // ── Heatmap rendering ──────────────────────────────────────────────────────
@@ -289,14 +323,18 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
 
           <button
             onClick={handleDownload}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-black text-xs font-black hover:brightness-110 active:scale-95 transition-all shadow-[0_6px_20px_rgba(255,214,0,0.25)]"
+            disabled={!resumeText.trim() || isAnalyzing}
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-black text-xs font-black hover:brightness-110 active:scale-95 transition-all shadow-[0_6px_20px_rgba(255,214,0,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-3.5 h-3.5" />
-            Download .txt
+            Download PDF
           </button>
 
           <button
-            onClick={onExit}
+            onClick={() => {
+              if (onExit) onExit();
+              else window.location.href = '/resume';
+            }}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-zinc-400 text-xs font-bold hover:text-white hover:border-white/20 transition-all"
           >
             <X className="w-3.5 h-3.5" />

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Wand2, Loader2, Copy, Check, Sparkles } from "lucide-react";
+import { useResumeStore } from "@/store/useResumeStore";
 import { cn } from "@/lib/utils";
 import BeforeAfterPanel from "./BeforeAfterPanel";
 import ScoreDeltaBadge from "./ScoreDeltaBadge";
@@ -13,7 +14,7 @@ interface BulletRewriterProps {
   resumeText?: string;
   previousScore?: number;
   onScoreUpdate?: (delta: number, newScore: number, readiness: number, readinessLabel: string, micro: string) => void;
-  onBulletAccepted?: (text: string) => void;
+  onBulletAccepted?: (text: string, original?: string, skipUpdate?: boolean) => void;
 }
 
 const BulletRewriter = React.memo(({
@@ -44,6 +45,8 @@ const BulletRewriter = React.memo(({
   const [inlineDelta, setInlineDelta] = useState<number | null>(null);
   const isRescoring = useRef(false);
 
+  const { resumeText: storeResumeText } = useResumeStore();
+
   // Sync when parent sends a new bullet (from clickable skill)
   useEffect(() => {
     if (externalBullet && externalBullet !== bullet) {
@@ -55,7 +58,6 @@ const BulletRewriter = React.memo(({
       setImpactSummary("");
       setScoreData(null);
       setInlineDelta(null);
-      setApplied(false);
     }
   }, [externalBullet]);
 
@@ -69,7 +71,6 @@ const BulletRewriter = React.memo(({
     setImpactSummary("");
     setScoreData(null);
     setInlineDelta(null);
-    setApplied(false);
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
@@ -91,11 +92,11 @@ const BulletRewriter = React.memo(({
       setAfter(data.after || data.rewritten);
       setImpactSummary(data.impact_summary || "");
 
-      // Trigger rescore only if JD context is available
-      if (jdText && resumeText && !isRescoring.current) {
+      // Trigger rescore only if JD context is available to show potential impact
+      if (jdText && storeResumeText && !isRescoring.current) {
         isRescoring.current = true;
         try {
-          const updatedResume = resumeText + "\n" + (data.after || data.rewritten);
+          const updatedResume = storeResumeText + "\n" + (data.after || data.rewritten);
           const rescoreRes = await fetch(`${apiUrl}/api/resume/rescore`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -122,30 +123,31 @@ const BulletRewriter = React.memo(({
               rescoreData.micro_feedback
             );
           }
-        } catch {
-          // Rescore is non-blocking — rewrite result still shown
+        } catch (err) {
+          console.error("Rescore failed:", err);
         } finally {
           isRescoring.current = false;
         }
       }
-    } catch {
+    } catch (err) {
+      console.error("Rewrite failed:", err);
       setRewritten("⚠️ Could not rewrite. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  }, [bullet, targetRole, jdText, resumeText, previousScore, onScoreUpdate]);
+  }, [bullet, targetRole, jdText, storeResumeText, previousScore, onScoreUpdate]);
 
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(rewritten);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [rewritten]);
-
-  const handleApply = useCallback(() => {
-    onBulletAccepted?.(rewritten);
-    setApplied(true);
-    setTimeout(() => setApplied(false), 3000);
-  }, [onBulletAccepted, rewritten]);
+  const handleCopy = async () => {
+    if (!rewritten.trim()) return;
+    try {
+      await navigator.clipboard.writeText(rewritten);
+      setCopied(true);
+      console.log("Copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Copy failed", err);
+    }
+  };
 
   return (
     <div className="liquid-glass p-10 rounded-[48px] border border-white/5 relative overflow-hidden">
@@ -214,26 +216,40 @@ const BulletRewriter = React.memo(({
             {rewritten ? (
               <>
                 <p className="text-sm text-white font-medium leading-relaxed pr-20">{rewritten}</p>
-                <div className="absolute top-3 right-3 flex items-center gap-2">
-                  <button
-                    onClick={handleApply}
-                    disabled={applied}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all",
-                      applied 
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
-                        : "bg-primary/10 hover:bg-primary/20 text-amber-400 border border-white/5"
-                    )}
-                  >
-                    {applied ? <Check className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
-                    {applied ? "Applied" : "Apply to Resume"}
-                  </button>
-                  <button
-                    onClick={handleCopy}
-                    className="p-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-amber-400 border border-white/5 transition-all"
-                  >
-                    {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                  </button>
+                <div className="absolute top-3 right-3 text-right">
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => {
+                        const store = useResumeStore.getState();
+                        store.updateResumeSection(bullet, rewritten);
+                        setApplied(true);
+                        setTimeout(() => setApplied(false), 2000);
+                      }}
+                      disabled={applied}
+                      className={cn(
+                        "flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all shadow-lg",
+                        applied 
+                          ? "bg-emerald-500 text-white" 
+                          : "bg-primary text-black hover:bg-amber-400"
+                      )}
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      {applied ? "Applied!" : "Apply to Resume"}
+                    </button>
+                    <button
+                      onClick={handleCopy}
+                      disabled={copied}
+                      className={cn(
+                        "flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all shadow-lg",
+                        copied 
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
+                          : "bg-white/5 hover:bg-white/10 text-zinc-400 border border-white/10"
+                      )}
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? "Copied!" : "Copy to Editor"}
+                    </button>
+                  </div>
                 </div>
               </>
             ) : (

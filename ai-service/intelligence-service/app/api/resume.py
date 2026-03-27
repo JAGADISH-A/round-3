@@ -58,13 +58,31 @@ async def upload_and_analyze(
     content = await file.read()
     analysis = parse_resume(content, target_role=target_role)
 
+    jd_score = 0
     if jd_text and jd_text.strip():
         resume_text = analysis.get("full_text", "")
         role = target_role or analysis.get("inferred_role", "Software Engineer")
-        jd_match = match_resume_to_jd(resume_text, jd_text, role=role)
-        analysis["jd_match"] = jd_match
+        try:
+            jd_match = match_resume_to_jd(resume_text, jd_text, role=role)
+            jd_score = jd_match.get("jd_match_score", 0)
+            analysis["jd_match"] = jd_match
+        except Exception as e:
+            print(f"[API] JD Match failed in upload: {e}")
+            analysis["jd_match"] = None
     else:
         analysis["jd_match"] = None
+
+    # Calculate Readiness Score explicitly on upload
+    try:
+        skills_count = len(analysis.get("skills", []))
+        sections_present = analysis.get("sections", [])
+        ready = compute_readiness_score(jd_score, sections_present, skills_count)
+        analysis["readiness_score"] = ready["resume_readiness"]
+        analysis["industry_readiness"] = ready["readiness_label"]
+    except Exception as e:
+        print(f"[API] Error computing readiness in upload: {e}")
+        analysis["readiness_score"] = 0
+        analysis["industry_readiness"] = "Beginner"
 
     return analysis
 
@@ -77,8 +95,21 @@ async def jd_match(request: JDMatchRequest):
     if not request.jd_text.strip():
         raise HTTPException(status_code=400, detail="jd_text cannot be empty")
 
-    result = match_resume_to_jd(request.resume_text, request.jd_text, role=request.role or "Software Engineer")
-    return result
+    try:
+        result = match_resume_to_jd(request.resume_text, request.jd_text, role=request.role or "Software Engineer")
+        return result
+    except Exception as e:
+        print(f"[API] JD Match endpoint failed: {e}")
+        # Return a safe empty match rather than 500
+        return {
+            "jd_match_score": 0,
+            "final_score": 0,
+            "match_label": "Error during match",
+            "matched_skills": [],
+            "missing_skills": [],
+            "semantic_score": 0,
+            "keyword_score": 0
+        }
 
 
 @router.post("/generate-bullet-from-skill")
@@ -110,7 +141,12 @@ async def rescore_resume(request: ScoreUpdateRequest):
         raise HTTPException(status_code=400, detail="jd_text cannot be empty")
 
     role = request.role or "Software Engineer"
-    new_score = recalculate_score(request.updated_resume_text, request.jd_text, role=role)
+    try:
+        new_score = recalculate_score(request.updated_resume_text, request.jd_text, role=role)
+    except Exception as e:
+        print(f"[API] Rescore failed: {e}")
+        new_score = request.previous_score
+        
     delta_data = compute_score_delta(request.previous_score, new_score)
     readiness_data = compute_readiness_score(
         jd_score=new_score,

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { useResumeStore } from "../store/useResumeStore";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface JdMatch {
@@ -149,7 +150,7 @@ function computeBulletImpact(
 export interface UseResumeAnalysisReturn {
   analysis: ResumeAnalysis | null;
   setInitialAnalysis: (data: ResumeAnalysis, jdText?: string) => void;
-  applyBullet: (bullet: string) => BulletImpact | null;
+  applyBullet: (bullet: string, original?: string, skipUpdate?: boolean) => BulletImpact | null;
   isReanalyzing: boolean;
   jdText: string;
   history: ResumeAnalysis[];
@@ -157,31 +158,53 @@ export interface UseResumeAnalysisReturn {
 }
 
 export function useResumeAnalysis(): UseResumeAnalysisReturn {
-  const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
-  const [jdText, setJdText] = useState("");
-  const [isReanalyzing, setIsReanalyzing] = useState(false);
-  const [lastImpact, setLastImpact] = useState<BulletImpact | null>(null);
+  const analysis = useResumeStore((state) => state.analysis) as ResumeAnalysis | null;
+  const status = useResumeStore((state) => state.status);
+  const jdText = useResumeStore((state) => state.jdText);
+  const isReanalyzing = useResumeStore((state) => state.isReanalyzing);
+  const lastImpact = useResumeStore((state) => state.lastImpact);
+  
+  const setAnalysisStore = useResumeStore((state) => state.setAnalysis);
+  const setStatus = useResumeStore((state) => state.setStatus);
+  const setResumeText = useResumeStore((state) => state.setResumeText);
+  const setIsReanalyzing = useResumeStore((state) => state.setIsReanalyzing);
+  const setLastImpact = useResumeStore((state) => state.setLastImpact);
+
   const history = useRef<ResumeAnalysis[]>([]);
   const usedKeywords = useRef<Set<string>>(new Set());
 
   const setInitialAnalysis = useCallback((data: ResumeAnalysis, jd?: string) => {
-    setAnalysis(data);
-    if (jd) setJdText(jd);
+    // Sync with global store (CRITICAL)
+    setAnalysisStore(data as any, jd);
+    setResumeText(data.full_text || "");
+    
     history.current = [];
     usedKeywords.current = new Set();
     setLastImpact(null);
-  }, []);
+    console.log("Initial Analysis Set. Text Length:", data.full_text?.length);
+  }, [setAnalysisStore, setResumeText, setLastImpact]);
 
-  const applyBullet = useCallback((bullet: string): BulletImpact | null => {
+  const applyBullet = useCallback((bullet: string, original?: string, skipUpdate = false): BulletImpact | null => {
     if (!analysis?.jd_match) return null;
 
     const { jd_match_score, missing_keywords, missing_with_labels, matched_keywords, matched_with_labels } = analysis.jd_match;
 
-    // Compute impact
+    // 1. Compute impact
     const impact = computeBulletImpact(bullet, missing_keywords, jd_match_score, usedKeywords.current);
     setLastImpact(impact);
 
-    // Save history for undo
+    // 2. Update Resume Text in Zustand Store (CRITICAL FIX)
+    if (!skipUpdate) {
+      setResumeText((prev: string) => {
+        if (!prev) return bullet;
+        if (original && prev.includes(original)) {
+          return prev.replace(original, bullet);
+        }
+        return prev.trim() + "\n• " + bullet;
+      });
+    }
+
+    // 3. Save history for undo
     history.current.push(structuredClone(analysis));
 
     // Mark newly matched keywords as used
@@ -198,30 +221,29 @@ export function useResumeAnalysis(): UseResumeAnalysisReturn {
       ...impact.newlyMatched.map((kw) => ({ keyword: kw, label: "Newly Added" })),
     ];
 
-    // Show re-analyzing pulse for realism (400ms)
+    // Show re-analyzing pulse for realism
     setIsReanalyzing(true);
+    
+    // Perform data merge
+    const newAnalysis = structuredClone(analysis);
+    if (newAnalysis?.jd_match) {
+      newAnalysis.jd_match.jd_match_score = impact.newScore;
+      newAnalysis.jd_match.match_label = getMatchLabel(impact.newScore);
+      newAnalysis.jd_match.matched_keywords = newMatched;
+      newAnalysis.jd_match.missing_keywords = newMissing;
+      newAnalysis.jd_match.matched_with_labels = newMatchedWithLabels;
+      newAnalysis.jd_match.missing_with_labels = newMissingWithLabels;
+      newAnalysis.jd_match.tech_matched_count = newAnalysis.jd_match.tech_matched_count + impact.newlyMatched.length;
+      
+      setAnalysisStore(newAnalysis as any);
+    }
+    
     setTimeout(() => {
-      setAnalysis((prev) => {
-        if (!prev?.jd_match) return prev;
-        return {
-          ...prev,
-          jd_match: {
-            ...prev.jd_match,
-            jd_match_score: impact.newScore,
-            match_label: getMatchLabel(impact.newScore),
-            matched_keywords: newMatched,
-            missing_keywords: newMissing,
-            matched_with_labels: newMatchedWithLabels,
-            missing_with_labels: newMissingWithLabels,
-            tech_matched_count: prev.jd_match.tech_matched_count + impact.newlyMatched.length,
-          },
-        };
-      });
       setIsReanalyzing(false);
     }, 450);
 
     return impact;
-  }, [analysis]);
+  }, [analysis, setAnalysisStore, setResumeText, setIsReanalyzing, setLastImpact]);
 
   return {
     analysis,

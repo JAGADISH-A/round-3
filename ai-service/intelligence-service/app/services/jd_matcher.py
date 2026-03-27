@@ -1,7 +1,8 @@
-"""JD Matching Service — Compares a parsed resume against a Job Description."""
 import re
+import torch
 from typing import List, Dict, Any, Optional
 from math import sqrt, floor
+from sentence_transformers import SentenceTransformer, util
 
 
 # ── Stop Words (basic English filter) ─────────────────────────────────────────
@@ -67,6 +68,27 @@ _SKILL_BULLETS: Dict[str, str] = {
     "react":         "Built responsive single-page application using React with component-based architecture",
     "node":          "Developed server-side Node.js API with Express handling concurrent requests",
 }
+
+
+# ── Semantic Model (Single-instance) ───────────────────────────────────────────
+_MODEL: Optional[SentenceTransformer] = None
+
+
+def get_model() -> SentenceTransformer:
+    """Lazy-load the sentence transformer model."""
+    global _MODEL
+    if _MODEL is None:
+        # all-MiniLM-L6-v2 or paraphrase-multilingual-MiniLM-L12-v2
+        _MODEL = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+    return _MODEL
+
+
+def get_embeddings(text: str) -> torch.Tensor:
+    """Generate embeddings for a given text."""
+    model = get_model()
+    # Simple chunking for long text - model limit is ~256-512 tokens
+    # For now, we embed the whole string; SentenceTransformer handles truncation
+    return model.encode(text, convert_to_tensor=True)
 
 
 def _tokenize(text: str) -> List[str]:
@@ -168,14 +190,39 @@ def match_resume_to_jd(resume_text: str, jd_text: str, role: str = "Software Eng
     Compare resume text against a job description.
     Returns match_score, matched_keywords, missing_keywords, action_insights, suggested_bullets.
     """
+    # ── Safety Check ──────────────────────────────────────────────────────────
+    if not jd_text.strip():
+        return {
+            "jd_match_score": 0,
+            "final_score": 0,
+            "semantic_score": 0,
+            "keyword_overlap_score": 0,
+            "keyword_score": 0,
+            "match_label": "Low Match",
+            "matched_keywords": [],
+            "matched_skills": [],
+            "missing_keywords": [],
+            "missing_skills": [],
+            "action_insights": [],
+            "suggested_bullets": [],
+        }
+
     resume_tokens = _tokenize(resume_text)
     jd_tokens = _tokenize(jd_text)
 
     resume_tf = _tf(resume_tokens)
     jd_tf = _tf(jd_tokens)
 
-    # ── Cosine Similarity (0-100) ────────────────────────────────────────────
-    cosine_score = _cosine(resume_tf, jd_tf) * 100
+    # ── Semantic Similarity (0-100) ──────────────────────────────────────────
+    try:
+        resume_emb = get_embeddings(resume_text)
+        jd_emb = get_embeddings(jd_text)
+        cosine_sim = util.cos_sim(resume_emb, jd_emb).item()
+        semantic_score = max(0, min(100, cosine_sim * 100))
+    except Exception:
+        # Fallback to TF-IDF if model fails or Torch issues
+        cosine_score = _cosine(resume_tf, jd_tf) * 100
+        semantic_score = cosine_score
 
     # ── Keyword Overlap Analysis ──────────────────────────────────────────────
     resume_set = set(resume_tokens)
@@ -194,7 +241,8 @@ def match_resume_to_jd(resume_text: str, jd_text: str, role: str = "Software Eng
     keyword_overlap_score = (len(all_matched) / max(len(all_jd), 1)) * 100
 
     # ── Final Blended Score ───────────────────────────────────────────────────
-    blended_score = int(min((cosine_score * 0.6 + keyword_overlap_score * 0.4), 100))
+    # Semantic (60%) + Keyword Overlap (40%)
+    blended_score = int(min((semantic_score * 0.6 + keyword_overlap_score * 0.4), 100))
 
     # ── Priority Missing Keywords (tech first, then general) ─────────────────
     priority_missing_raw = sorted(tech_missing)[:8] + sorted(general_missing)[:4]
@@ -231,8 +279,13 @@ def match_resume_to_jd(resume_text: str, jd_text: str, role: str = "Software Eng
         "missing_with_labels": missing_with_labels,
         "tech_matched_count": len(tech_matched),
         "tech_required_count": len(tech_jd),
-        "cosine_score": round(float(cosine_score), 1),
+        "semantic_score": round(float(semantic_score), 1),
         "keyword_overlap_score": round(float(keyword_overlap_score), 1),
+        "keyword_score": round(float(keyword_overlap_score), 1), # Alias
+        "final_score": blended_score,                            # Alias
+        "jd_score": blended_score,                               # Alias
+        "matched_skills": priority_matched,                     # Alias
+        "missing_skills": priority_missing,                     # Alias
         "action_insights": action_insights,
         "suggested_bullets": suggested_bullets,
     }
@@ -259,7 +312,7 @@ _EXPECTED_SECTIONS = {"experience", "education", "skills", "projects", "summary"
 def recalculate_score(updated_resume: str, jd_text: str, role: str = "Software Engineer") -> int:
     """Re-run JD matching and return the new blended score (0–100)."""
     result = match_resume_to_jd(updated_resume, jd_text, role=role)
-    return result["jd_match_score"]
+    return result.get("final_score", result.get("jd_match_score", 0))
 
 
 def compute_score_delta(old_score: int, new_score: int) -> Dict[str, Any]:
