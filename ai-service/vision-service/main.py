@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import vision_routes
@@ -5,11 +6,7 @@ from routes import vision_routes
 app = FastAPI(title="BumbleBee Vision AI")
 
 # Standardized CORS for BumbleBee AI Hive
-origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:3002",
-]
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:3002").split(",")
 
 app.add_middleware(
     CORSMiddleware,

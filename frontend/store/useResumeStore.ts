@@ -164,12 +164,15 @@ export const useResumeStore = create<ResumeStoreState>()(
         
         // FIX 2: Relaxed safety check to avoid blocking valid updates
         if (currentText && text.length < 5 && currentText.length > 1000) {
-          console.warn("REJECTED: setResumeText (potential partial overwrite). New length:", text.length, "Existing:", currentText.length);
+          if (process.env.NODE_ENV === "development") {
+            console.warn("REJECTED: setResumeText (potential partial overwrite). New length:", text.length, "Existing:", currentText.length);
+          }
           return;
         }
 
-        // FIX 4: Add success log
-        console.log("ACCEPTED: setResumeText. New Length:", text.length);
+        if (process.env.NODE_ENV === "development") {
+          console.debug("ACCEPTED: setResumeText. New Length:", text.length);
+        }
 
         // Update history before setting new text
         const newHistory = [currentText, ...state.history].slice(0, 30);
@@ -277,12 +280,14 @@ export const useResumeStore = create<ResumeStoreState>()(
         const current = state.resumeText;
         let updated = current;
         
-        console.log("DEBUG: updateResumeSection called.", { 
-          hasCurrent: !!current, 
-          currentLength: current.length,
-          oldTextDetected: current.includes(oldText),
-          oldTextPreview: oldText.slice(0, 30) + "..."
-        });
+        if (process.env.NODE_ENV === "development") {
+          console.debug("DEBUG: updateResumeSection called.", { 
+            hasCurrent: !!current, 
+            currentLength: current.length,
+            oldTextDetected: current.includes(oldText),
+            oldTextPreview: oldText.slice(0, 30) + "..."
+          });
+        }
 
         if (oldText && current.includes(oldText)) {
           // Precise replacement
@@ -291,7 +296,7 @@ export const useResumeStore = create<ResumeStoreState>()(
         } else {
           // Fallback: append instead of replacing entire resume
           updated = current.trim() + "\n• " + newText;
-          console.log("DEBUG: updateResumeSection -> APPENDED");
+          if (process.env.NODE_ENV === "development") console.debug("DEBUG: updateResumeSection -> APPENDED");
         }
 
         get().setResumeText(updated);

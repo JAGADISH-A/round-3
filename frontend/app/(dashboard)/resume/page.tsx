@@ -60,7 +60,9 @@ export default function ResumePage() {
     
     const triggerRecovery = async () => {
       if (resumeText && !analysis && status === 'IDLE') {
-        console.log("RECOVERY: Resume text exists but no analysis. Triggering...");
+        if (process.env.NODE_ENV === "development") {
+          console.debug("RECOVERY: Resume text exists but no analysis. Triggering...");
+        }
         setStatus('LOADING');
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";

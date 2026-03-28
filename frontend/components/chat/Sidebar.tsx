@@ -14,7 +14,8 @@ import {
   LogOut, 
   ChevronLeft, 
   ChevronRight,
-  Globe
+  Globe,
+  Mic
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -37,6 +38,7 @@ export default function Sidebar() {
     { icon: MessageSquare, label: t.sidebar.chat, href: "/chat" },
     { icon: FileText, label: t.sidebar.resume_analyzer || "Resume Analyzer", href: "/resume" },
     { icon: Video, label: t.sidebar.voice, href: "/voice" },
+    { icon: Mic, label: t.sidebar.interview || "Interview", href: "/interview" },
     { icon: BookOpen, label: t.sidebar.study_hub || "Study Hub", href: "/study", placeholder: true },
     { icon: Map, label: t.sidebar.roadmap, href: "/roadmap", placeholder: true },
   ];

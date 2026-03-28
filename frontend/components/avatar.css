@@ -1,0 +1,142 @@
+/* avatar.css — Premium Avatar glow, pulse, and transition styles */
+
+/* ─── Breathing Glow Pulse ──────────────────────────────────────── */
+@keyframes breathe-glow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+/* ─── Subtle avatar vertical bob (CSS fallback, Rive preferred) ─── */
+@keyframes avatar-bob {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  40%       { transform: translateY(-5px) rotate(0.8deg); }
+  70%       { transform: translateY(-3px) rotate(-0.5deg); }
+}
+
+/* ─── Speaking Ripple Ring ───────────────────────────────────────── */
+@keyframes speaking-ring {
+  0%   { transform: translate(-50%, -50%) scale(0.92); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1.35); opacity: 0; }
+}
+
+/* ─── Listening Dot Pulse ───────────────────────────────────────── */
+@keyframes listen-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.4; }
+  50%       { transform: translate(-50%, -50%) scale(1.12); opacity: 0.65; }
+}
+
+/* ─── Wrapper ────────────────────────────────────────────────────── */
+.avatar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Hover lift */
+  transition: transform 300ms ease;
+}
+.avatar-wrapper:hover {
+  transform: scale(1.02);
+}
+
+/* ─── Glow Aura Layer (::before sibling div) ─────────────────────── */
+.avatar-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 9999px;
+  pointer-events: none;
+  /* Scoped transitions — NOT 'all' to avoid unexpected slowdowns */
+  transition:
+    background 280ms ease-out,
+    width 280ms ease-out,
+    height 280ms ease-out,
+    opacity 280ms ease-out,
+    filter 280ms ease-out;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+
+/* ─── State: Idle ────────────────────────────────────────────────── */
+.avatar-glow--idle {
+  width: 85%;
+  height: 85%;
+  background: radial-gradient(circle, rgba(245, 197, 24, 0.22) 0%, transparent 70%);
+  filter: blur(28px);
+  animation: breathe-glow 4s ease-in-out infinite;
+}
+
+/* ─── State: Listening ───────────────────────────────────────────── */
+.avatar-glow--listening {
+  width: 90%;
+  height: 90%;
+  background: radial-gradient(circle, rgba(28, 176, 246, 0.35) 0%, transparent 70%);
+  filter: blur(32px);
+  animation: listen-pulse 2.2s ease-in-out infinite;
+}
+
+/* ─── State: Thinking ────────────────────────────────────────────── */
+.avatar-glow--thinking {
+  width: 82%;
+  height: 82%;
+  background: radial-gradient(circle, rgba(255, 200, 0, 0.28) 0%, transparent 70%);
+  filter: blur(30px);
+  animation: breathe-glow 3s ease-in-out infinite;
+}
+
+/* ─── State: Speaking ────────────────────────────────────────────── */
+.avatar-glow--speaking {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(88, 204, 2, 0.42) 0%, transparent 65%);
+  filter: blur(38px);
+  /* No pulse — strong static glow while AI talks */
+  animation: none;
+  opacity: 0.8;
+}
+
+/* ─── Speaking Ripple Ring ───────────────────────────────────────── */
+.avatar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 80%;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 0;
+}
+.avatar-ring--speaking {
+  border: 2px solid rgba(88, 204, 2, 0.5);
+  animation: speaking-ring 1.5s ease-out infinite;
+}
+.avatar-ring--idle,
+.avatar-ring--listening,
+.avatar-ring--thinking {
+  border: none;
+  animation: none;
+}
+
+/* ─── Canvas (Rive) Layer ────────────────────────────────────────── */
+.avatar-canvas {
+  position: relative;
+  z-index: 1;
+  /* Scoped — only transform and filter, not 'all' */
+  transition: transform 250ms ease-out, filter 250ms ease-out;
+  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6));
+}
+.avatar-canvas--idle,
+.avatar-canvas--thinking {
+  transform: scale(1);
+}
+.avatar-canvas--listening {
+  transform: scale(1.01);
+}
+.avatar-canvas--speaking {
+  transform: scale(1.04);
+}

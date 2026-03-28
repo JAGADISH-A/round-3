@@ -181,7 +181,9 @@ export function useResumeAnalysis(): UseResumeAnalysisReturn {
     history.current = [];
     usedKeywords.current = new Set();
     setLastImpact(null);
-    console.log("Initial Analysis Set. Text Length:", data.full_text?.length);
+    if (process.env.NODE_ENV === "development") {
+      console.debug("Initial Analysis Set. Text Length:", data.full_text?.length);
+    }
   }, [setAnalysisStore, setResumeText, setLastImpact]);
 
   const applyBullet = useCallback((bullet: string, original?: string, skipUpdate = false): BulletImpact | null => {

@@ -36,7 +36,9 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
   
   // Debug: Validate full resume is loaded
   useEffect(() => {
-    console.log("Editor render:", resumeText?.length || 0);
+    if (process.env.NODE_ENV === "development") {
+      console.debug("Editor render:", resumeText?.length || 0);
+    }
   }, [resumeText]);
 
   const { score, delta, readiness, textSegments, isAnalyzing } =

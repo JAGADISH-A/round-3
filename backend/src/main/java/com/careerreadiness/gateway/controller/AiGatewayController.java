@@ -53,7 +53,7 @@ public class AiGatewayController {
 
         String url = targetBaseUrl + path + query;
 
-        log.info("[{}] Gateway Routing: {} {} -> {}", 
+        log.debug("[{}] Gateway Routing: {} {} -> {}", 
                 LocalDateTime.now(), request.getMethod(), request.getRequestURI(), url);
 
         HttpHeaders headers = new HttpHeaders();

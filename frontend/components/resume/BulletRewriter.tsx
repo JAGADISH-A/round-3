@@ -142,7 +142,9 @@ const BulletRewriter = React.memo(({
     try {
       await navigator.clipboard.writeText(rewritten);
       setCopied(true);
-      console.log("Copied to clipboard");
+      if (process.env.NODE_ENV === "development") {
+        console.log("Copied to clipboard");
+      }
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Copy failed", err);

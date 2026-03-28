@@ -31,11 +31,7 @@ from app.services.tts_service import sanitize_for_tts
 app = FastAPI(title="BumbleBee AI Intelligence", version="1.0.0")
 
 # Standardized CORS for BumbleBee AI Hive
-origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:3002",
-]
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:3002").split(",")
 
 app.add_middleware(
     CORSMiddleware,

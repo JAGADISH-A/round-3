@@ -28,7 +28,7 @@ Thumbs.db
 node_modules/
 **/node_modules/
 .next/
-**/ .next/
+**/.next/
 out/
 build/
 dist/
@@ -56,25 +56,34 @@ __pycache__/
 *$py.class
 .pytest_cache/
 .venv/
+**/venv/
 venv/
 env/
 virtualenv/
 chroma_db/
+**/chroma_db/
 dataset/
 pip_list*.txt
 .ipynb_checkpoints/
 
 # --- Project Specific ---
+*.log
+**/*.log
 bot_*.log
 verify_output.txt
 verify_*.py
 test_*.wav
 temp_*/
+tmp/
+**/tmp/
+tmp_strings.txt
 
 # --- Environment Files ---
 .env
 .env.*
-!.env.example
+**/.env
+**/.env.*
+! .env.example
 
 # --- Compiled/Generated ---
 *.class
