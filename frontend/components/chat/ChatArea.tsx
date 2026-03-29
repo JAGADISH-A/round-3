@@ -201,7 +201,59 @@ export default function ChatArea() {
     });
   };
 
-  const handleSend = async (
+    const handleFileUpload = async (file: File) => {
+      setIsProcessing(true);
+      setIsThinking(true);
+      
+      const id = Date.now().toString();
+      const conv: Conversation = {
+        id,
+        title: "RES_SCAN: " + file.name.split('.')[0].toUpperCase(),
+        messages: [],
+        createdAt: new Date().toLocaleString()
+      };
+      setConversations(prev => [conv, ...prev]);
+      setActiveId(id);
+      setMessages([]);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const res = await fetch(ENDPOINTS.RESUME_UPLOAD, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) throw new Error("Neural Link Failed.");
+        const data = await res.json();
+        
+        // Update store
+        useResumeStore.getState().setAnalysis(data);
+        
+        const welcomeMsg: Message = {
+          role: "ai",
+          content: `>>> NEURAL_ANALYSIS_COMPLETE\n\nI have finished scanning **${file.name}**. \nTarget Role: **${data.confirmed_role || data.inferred_role}** \nSignal Alignment: **${data.ats_score}%**\n\nHow shall we proceed with the optimization?`,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          persona: "resume_reviewer",
+          type: "resume_analysis_result"
+        };
+        
+        setMessages([welcomeMsg]);
+        persistMessages([welcomeMsg], id);
+      } catch (err: any) {
+        setMessages([{
+          role: "ai", 
+          content: "PROTOCOL_ERROR: Resume data injection failed.",
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+      } finally {
+        setIsThinking(false);
+        setIsProcessing(false);
+      }
+    };
+
+    const handleSend = async (
     selectedModel: string, 
     selectedPersona: string, 
     selectedTone: string,
@@ -210,28 +262,7 @@ export default function ChatArea() {
   ) => {
     const messageContent = overrideValue || inputValue;
     if (!messageContent.trim()) return;
-    // Ref-based lock: prevents double-sends even if isThinking state is stale
-    if (isProcessingRef.current) {
-      // Queue this message — will auto-send after current response completes
-      pendingMessageRef.current = { model: selectedModel, persona: selectedPersona, tone: selectedTone, value: messageContent };
-      console.debug("[handleSend] Request queued:", messageContent.slice(0, 40));
-      return;
-    }
-    isProcessingRef.current = true;
-    setIsProcessing(true);
-
-    // User is done speaking — lock input gate BEFORE clearing transcript
-    isUserSpeakingRef.current = false;
-
-    // Strict Language detection — captured immediately, before any async work
-    const inputLang = detectLanguage(messageContent);
-    setActiveLang(inputLang);
-
-    // Stop current speech if any
-    stop();
-
-    const detectedIntent = detectIntent(messageContent);
-
+    
     // Create new conversation on first message
     let currentId = activeId;
     if (!currentId) {
@@ -239,6 +270,19 @@ export default function ChatArea() {
       setActiveId(currentId);
     }
 
+    if (isProcessingRef.current) {
+      pendingMessageRef.current = { model: selectedModel, persona: selectedPersona, tone: selectedTone, value: messageContent };
+      return;
+    }
+    isProcessingRef.current = true;
+    setIsProcessing(true);
+    isUserSpeakingRef.current = false;
+
+    const inputLang = detectLanguage(messageContent);
+    setActiveLang(inputLang);
+    stop();
+
+    const detectedIntent = detectIntent(messageContent);
     let userContent = messageContent;
     
     // Inject Vision Metrics if in Face Reviewer mode
@@ -416,15 +460,12 @@ Provide helpful interview coaching feedback.`;
       const finalMessages = [...updatedMessages, errMsg];
       setMessages(finalMessages);
       persistMessages(finalMessages, currentId);
-    } finally {
+      } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
-      // Auto-fire queued message if one arrived during processing
       const pending = pendingMessageRef.current;
       if (pending) {
         pendingMessageRef.current = null;
-        console.debug("[handleSend] Firing queued message:", pending.value.slice(0, 40));
-        // Small delay so state updates settle
         setTimeout(() => handleSend(pending.model, pending.persona, pending.tone, pending.value), 50);
       }
     }
@@ -447,6 +488,7 @@ Provide helpful interview coaching feedback.`;
         switchConversation={switchConversation}
         deleteConversation={deleteConversation}
         handleSend={handleSend}
+        handleFileUpload={handleFileUpload}
         messagesEndRef={messagesEndRef}
         typingMessageId={typingMessageId}
         isListening={isListening}
@@ -502,7 +544,8 @@ function ChatContent({
   t,
   initialPersona,
   speak,
-  activeLang
+  activeLang,
+  handleFileUpload
 }: any) {
   // Handle Analysis Context Handoff
   useEffect(() => {
@@ -562,20 +605,23 @@ function ChatContent({
               key={conv.id}
               onClick={() => switchConversation(conv)}
               className={cn(
-                "w-full text-left px-3 py-3 rounded-xl transition-all group flex items-start justify-between gap-2",
+                "w-full text-left px-3 py-3 rounded-xl transition-all group flex items-start justify-between gap-2 border-l-2",
                 conv.id === activeId
-                  ? "bg-[#FFD600]/10 border border-[#FFD600]/20"
-                  : "hover:bg-white/5 border border-transparent"
+                  ? "bg-cyan-500/10 border-cyan-500 shadow-[0_0_20px_rgba(0,255,255,0.1)]"
+                  : "hover:bg-white/5 border-transparent opacity-60 hover:opacity-100"
               )}
             >
               <div className="min-w-0 flex-1">
                 <p className={cn(
-                  "text-[11px] font-bold truncate leading-tight",
-                  conv.id === activeId ? "text-[#FFD600]" : "text-zinc-300"
+                  "text-[11px] font-bold truncate leading-tight tracking-wide font-nav",
+                  conv.id === activeId ? "text-cyan-400" : "text-zinc-300"
                 )}>
-                  {conv.title}
+                  {conv.title.toUpperCase()}
                 </p>
-                <p className="text-[9px] text-zinc-600 mt-0.5 font-mono">{conv.messages.length} msgs · {conv.createdAt}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[9px] text-zinc-600 font-mono tracking-tighter">[{conv.messages.length} BITS]</span>
+                  <span className="text-[9px] text-zinc-600 font-mono italic">SYNC: {conv.createdAt}</span>
+                </div>
               </div>
               <button
                 onClick={(e) => deleteConversation(e, conv.id)}
@@ -595,12 +641,12 @@ function ChatContent({
         {/* Header */}
         <header className="h-[64px] border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md shrink-0 py-2">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(255,214,0,0.1)]">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.1)]">
             <Bot className="w-4 h-4" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.chat.intel_active}</span>
             </div>
           </div>
@@ -617,7 +663,7 @@ function ChatContent({
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all",
                 showHistory
-                  ? "bg-[#FFD600]/10 border-[#FFD600]/30 text-[#FFD600]"
+                  ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400"
                   : "bg-white/5 border-white/8 text-zinc-500 hover:text-white hover:bg-white/10"
               )}
             >
@@ -714,7 +760,7 @@ function ChatContent({
                    <div className="whitespace-pre-wrap break-words font-sans text-[14px] leading-7 min-w-0">
                     {msg.content}
                     {msg.role === "ai" && typingMessageId === i && (
-                      <span className="inline-block w-1.5 h-3.5 bg-primary ml-1 animate-pulse align-middle">▌</span>
+                      <span className="inline-block w-1.5 h-3.5 bg-cyan-400 ml-1 animate-pulse align-middle">▌</span>
                     )}
                   </div>
                   <div className="mt-2 flex items-center justify-between opacity-50">
@@ -768,28 +814,76 @@ function ChatContent({
                   </div>
                 )}
 
-                {/* Legacy Suggestions (Fallback) */}
-                {msg.role === "ai" && msg.suggestions && msg.suggestions.length > 0 && !msg.options && (
-                  <div className="flex flex-wrap gap-2 mt-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    {msg.suggestions.map((suggestion: any, idx: number) => (
+                {/* Interactive Roadmap Options (JSON-Based) */}
+                {msg.role === "ai" && msg.type === "roadmap_options" && msg.options && (
+                  <div className="flex flex-col gap-3 mt-4 w-full animate-in fade-in slide-in-from-bottom-3 duration-500">
+                    <div className="flex flex-wrap gap-2">
+                    {msg.options.map((option: any) => (
                       <button
-                        key={idx}
-                        onClick={() => handleSend(
-                          localStorage.getItem("careerspark_model") || "llama33",
-                          msg.persona || "career_coach",
-                          msg.tone || "friendly",
-                          `I want to explore the ${suggestion.level} roadmap: ${suggestion.label}`
-                        )}
-                        className="group relative flex flex-col items-start p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 max-w-[200px]"
+                        key={option.id}
+                        onClick={() => {
+                          const isRoadmapLevel = ["beginner", "advanced", "specialized"].includes(option.id);
+                          handleSend(
+                            localStorage.getItem("careerspark_model") || "llama33",
+                            msg.persona || "career_coach",
+                            msg.tone || "friendly",
+                            isRoadmapLevel ? JSON.stringify({
+                              type: "roadmap_selection",
+                              selected: option.id,
+                              query: msg.roadmapQuery || "Software Engineer"
+                            }) : option.title
+                          );
+                        }}
+                        className="group relative flex items-center justify-between p-4 rounded-2xl bg-gradient-to-br from-zinc-900 to-black border border-white/5 hover:border-cyan-500/40 hover:from-cyan-500/10 hover:to-cyan-500/5 transition-all duration-500 min-w-[200px] flex-1 text-left"
                       >
-                        <span className="text-[11px] font-bold text-primary group-hover:text-white transition-colors uppercase tracking-tight">
-                          {suggestion.label}
-                        </span>
-                        <span className="text-[10px] text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
-                          {suggestion.description}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-black text-cyan-400 group-hover:text-white uppercase tracking-wider transition-colors">
+                            {option.title}
+                          </span>
+                          <span className="text-[10px] text-zinc-500 font-medium leading-relaxed group-hover:text-zinc-300 transition-colors">
+                            {option.desc}
+                          </span>
+                        </div>
+                        <ChevronLeft className="w-4 h-4 text-cyan-400 opacity-0 group-hover:opacity-100 rotate-180 transition-all duration-300 translate-x-2 group-hover:translate-x-0" />
                       </button>
                     ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Specialized Resume Analysis Result rendering */}
+                {msg.role === "ai" && msg.persona === "resume_reviewer" && (
+                  <div className="mt-4 p-4 rounded-2xl bg-cyan-500/5 border border-cyan-500/10 animate-in fade-in slide-in-from-bottom-2 duration-700 w-full max-w-sm">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-xl font-bold text-cyan-400">
+                         {useResumeStore.getState().analysis?.ats_score || "--"}%
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-black">ATS Readiness</span>
+                        <span className="text-xs font-bold text-zinc-300">Neural alignment score</span>
+                      </div>
+                    </div>
+                    {/* Progress Bar HUD */}
+                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-4 border border-white/5">
+                      <div 
+                        className="h-full bg-cyan-400 transition-all duration-1000 origin-left" 
+                        style={{ width: `${useResumeStore.getState().analysis?.ats_score || 0}%` }} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                       <div className="p-2 rounded-lg bg-black/40 border border-white/5">
+                          <span className="text-[8px] uppercase text-zinc-600 block">Candidate Role</span>
+                          <span className="text-[10px] font-bold text-cyan-500 truncate block">
+                            {useResumeStore.getState().analysis?.confirmed_role || "Scanning..."}
+                          </span>
+                       </div>
+                       <div className="p-2 rounded-lg bg-black/40 border border-white/5">
+                          <span className="text-[8px] uppercase text-zinc-600 block">Career Goal</span>
+                          <span className="text-[10px] font-bold text-cyan-500 truncate block">
+                            {useResumeStore.getState().analysis?.career_goal || "General"}
+                          </span>
+                       </div>
+                    </div>
                   </div>
                 )}
               </div>

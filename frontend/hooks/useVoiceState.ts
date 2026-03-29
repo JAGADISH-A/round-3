@@ -16,9 +16,10 @@ interface UseVoiceStateProps {
   role?: string;
   difficulty?: string;
   focusArea?: string;
+  lang?: string;
 }
 
-export function useVoiceState({ apiKey, assistantId, role, difficulty, focusArea }: UseVoiceStateProps) {
+export function useVoiceState({ apiKey, assistantId, role, difficulty, focusArea, lang = "en" }: UseVoiceStateProps) {
   const [state, setState] = useState<VoiceState>("idle");
   const [isRunning, setIsRunning] = useState(false);
   const vapiRef = useRef<any>(null);
@@ -86,12 +87,16 @@ export function useVoiceState({ apiKey, assistantId, role, difficulty, focusArea
         setState("idle");
       });
 
-      // Construct dynamic overrides to shape the AI's behavior based on the Gamified UI selections
-      const dynamicFirstMessage = `Hello! I am your AI Coach. Are you ready to begin your ${difficulty?.toLowerCase() || 'practice'} interview for the ${role || 'user'} position, focusing on ${focusArea?.toLowerCase() || 'your skills'}?`;
+      // Construct dynamic overrides to shape the AI's behavior
+      const isTamil = lang === "ta";
+      const dynamicFirstMessage = isTamil 
+        ? `வணக்கம்! நான் உங்கள் AI பயிற்சியாளர். ${role || 'பயனர்'} பதவிக்கான உங்கள் ${difficulty?.toLowerCase() || 'பயிற்சி'} நேர்காணலைத் தொடங்க நீங்கள் தயாரா? நாம் ${focusArea?.toLowerCase() || 'உங்கள் திறன்கள்'} குறித்து கவனம் செலுத்துவோம்.`
+        : `Hello! I am your AI Coach. Are you ready to begin your ${difficulty?.toLowerCase() || 'practice'} interview for the ${role || 'user'} position, focusing on ${focusArea?.toLowerCase() || 'your skills'}?`;
 
       const assistantOverrides = {
         firstMessage: dynamicFirstMessage,
-        // Depending on your VAPI assistant config, you can also inject variableValues here:
+        // Inject language hint into instructions
+        instructions: `You are an AI Interview Coach. Please conduct this interview in ${isTamil ? 'Tamil' : 'English'}. Current focus: ${focusArea}.`,
         variableValues: {
           role: role || "",
           difficulty: difficulty || "",
@@ -109,7 +114,7 @@ export function useVoiceState({ apiKey, assistantId, role, difficulty, focusArea
       setState("idle");
       setIsRunning(false);
     }
-  }, [apiKey, assistantId, role, difficulty, focusArea]);
+  }, [apiKey, assistantId, role, difficulty, focusArea, lang]);
 
   const stop = useCallback(() => {
     if (vapiRef.current) {

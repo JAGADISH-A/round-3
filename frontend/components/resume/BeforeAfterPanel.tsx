@@ -2,6 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 
 interface BeforeAfterPanelProps {
   before: string;
@@ -16,19 +18,22 @@ export default function BeforeAfterPanel({
   impactSummary,
   improvements = [],
 }: BeforeAfterPanelProps) {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
   if (!before || !after) return null;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4 mt-4">
       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-        <ArrowRight className="w-3 h-3" /> Before → After
+        <ArrowRight className="w-3 h-3" /> {t.resume.rewriter.comparison}
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Before */}
         <div className="p-4 bg-red-500/5 border border-red-500/15 rounded-2xl space-y-2">
           <span className="text-[9px] font-black uppercase tracking-widest text-red-400/60">
-            Before
+            {t.resume.rewriter.before}
           </span>
           <p className="text-sm text-zinc-400 font-mono leading-relaxed">{before}</p>
         </div>
@@ -36,7 +41,7 @@ export default function BeforeAfterPanel({
         {/* After */}
         <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl space-y-2">
           <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400/60">
-            After
+            {t.resume.rewriter.after}
           </span>
           <p className="text-sm text-white font-medium leading-relaxed">{after}</p>
         </div>

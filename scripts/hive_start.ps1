@@ -10,6 +10,40 @@ try {
     Start-Sleep -Seconds 2
 } catch { }
 
+# 1.1 Pre-Flight Checks (Dependencies & Secrets)
+Write-Host "`n[PRE-FLIGHT] Verifying system dependencies..." -ForegroundColor Cyan
+
+# Check ffmpeg
+$ffmpegCheck = Get-Command ffmpeg -ErrorAction SilentlyContinue
+if (-not $ffmpegCheck) {
+    Write-Host "[ERROR] 'ffmpeg' not found in system PATH. Voice processing WILL fail!" -ForegroundColor Red
+    Write-Host "[FIX] Install via: 'choco install ffmpeg' (Admin) or download from https://ffmpeg.org/" -ForegroundColor Yellow
+} else {
+    Write-Host "[OK] ffmpeg verified: $($ffmpegCheck.Source)" -ForegroundColor Green
+}
+
+# Check Telegram Token
+$envPath = "ai-service\intelligence-service\.env"
+if (Test-Path $envPath) {
+    $token = Select-String -Path $envPath -Pattern "TELEGRAM_BOT_TOKEN=(.+)" | ForEach-Object { $_.Matches.Groups[1].Value }
+    if ($token -eq "your_token_here" -or [string]::IsNullOrWhiteSpace($token)) {
+        Write-Host "[ERROR] TELEGRAM_BOT_TOKEN is missing or default in $envPath" -ForegroundColor Red
+        Write-Host "[FIX] Open $envPath and replace 'your_token_here' with your real bot token." -ForegroundColor Yellow
+        $preventStart = $true
+    } else {
+        Write-Host "[OK] Telegram Token configured." -ForegroundColor Green
+    }
+} else {
+    Write-Host "[ERROR] .env file missing in ai-service\intelligence-service\" -ForegroundColor Red
+    Write-Host "[FIX] I have created an empty .env file. Please fill in your token." -ForegroundColor Yellow
+    $preventStart = $true
+}
+
+if ($preventStart) {
+    Write-Host "`n[FAIL] Startup halted due to missing configuration. Fix the errors above and run again.`n" -ForegroundColor Red
+    exit
+}
+
 # 2. Start Services
 Write-Host "`n[STARTING] Launching services in background..." -ForegroundColor Cyan
 

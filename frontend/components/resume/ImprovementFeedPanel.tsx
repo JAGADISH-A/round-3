@@ -3,6 +3,8 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, History } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 
 interface Improvement {
   type: string;
@@ -19,6 +21,9 @@ const ImprovementFeedPanel = React.memo(({
   improvements,
   totalImprovement,
 }: ImprovementFeedPanelProps) => {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
   if (improvements.length === 0) return null;
 
   return (
@@ -31,10 +36,10 @@ const ImprovementFeedPanel = React.memo(({
           </div>
           <div>
             <h4 className="text-lg font-bebas tracking-wide uppercase">
-              Improvement <span className="text-primary">Log</span>
+              {t.resume.history.title} <span className="text-primary">{t.resume.history.accent}</span>
             </h4>
             <p className="text-[9px] text-zinc-500 font-mono uppercase tracking-widest">
-              Session Progress
+              {t.resume.history.subtitle}
             </p>
           </div>
         </div>
@@ -57,7 +62,7 @@ const ImprovementFeedPanel = React.memo(({
           ) : (
             <Minus className="w-3.5 h-3.5" />
           )}
-          Total: {totalImprovement > 0 ? "+" : ""}{totalImprovement}
+          {t.resume.history.total}: {totalImprovement > 0 ? "+" : ""}{totalImprovement}
         </div>
       </div>
 

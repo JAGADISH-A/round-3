@@ -47,43 +47,48 @@ export default function Sidebar() {
     <>
       <aside 
         className={cn(
-          "h-screen bg-zinc-950 border-r border-white/5 flex flex-col transition-all duration-500 ease-in-out relative z-20 shadow-2xl",
-          isCollapsed ? "w-16" : "w-64"
+          "h-screen bg-black/80 border-r border-cyan-500/20 flex flex-col transition-all duration-500 ease-in-out relative z-20 shadow-[0_0_30px_rgba(0,255,255,0.1)]",
+          isCollapsed ? "w-20" : "w-72"
         )}
       >
+        <div className="absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-cyan-500/50 to-transparent" />
+
         {/* Toggle Button */}
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-10 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-black hover:scale-110 transition-transform shadow-lg shadow-primary/20"
+          className="absolute -right-4 top-12 w-8 h-8 bg-black border border-cyan-500/50 flex items-center justify-center text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all shadow-[0_0_10px_rgba(0,255,255,0.2)] z-30"
+          style={{ clipPath: 'polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 20%)' }}
         >
-          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
 
         {/* Header / Logo */}
-        <div className="p-6 flex items-center gap-3 overflow-hidden">
-          <div className="relative w-8 h-8 flex-shrink-0">
-            <Image src="/logo.png" alt="BumbleBee Logo" fill className="object-contain" />
+        <div className="p-8 flex items-center gap-4 overflow-hidden">
+          <div className="relative w-10 h-10 flex-shrink-0 border border-cyan-500/30 p-1">
+            <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-cyan-500" />
+            <div className="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-cyan-500" />
+            <Image src="/logo.png" alt="BumbleBee Logo" fill className="object-contain opacity-80" />
           </div>
           {!isCollapsed && (
-            <span className="text-2xl font-bebas tracking-[0.2em] text-primary whitespace-nowrap italic">
-              BumbleBee <span className="text-white">AI</span>
+            <span className="text-xl font-orbitron tracking-[0.3em] text-cyan-400 whitespace-nowrap">
+              HIVE <span className="text-white opacity-50">OS</span>
             </span>
           )}
         </div>
 
         {/* Language Toggle UI */}
         {!isCollapsed && (
-          <div className="px-6 mb-6">
-            <div className="bg-black/50 p-1 rounded-xl border border-white/5 flex items-center justify-between">
+          <div className="px-8 mb-8">
+            <div className="bg-cyan-500/5 p-1 border border-cyan-500/20 flex items-center justify-between" style={{ clipPath: 'polygon(5% 0, 100% 0, 95% 100%, 0 100%)' }}>
               <button 
                 onClick={() => setLang("en")}
-                className={cn("px-3 py-1.5 text-xs font-bold rounded-lg transition-all", lang === "en" ? "bg-primary text-black" : "text-zinc-500 hover:text-white")}
+                className={cn("px-4 py-1 text-[10px] font-orbitron transition-all", lang === "en" ? "bg-cyan-500 text-black shadow-[0_0_10px_rgba(0,255,255,0.4)]" : "text-cyan-500/50 hover:text-cyan-400")}
               >
-                EN
+                ENG
               </button>
               <button 
                 onClick={() => setLang("ta")}
-                className={cn("px-3 py-1.5 text-xs font-bold rounded-lg transition-all", lang === "ta" ? "bg-primary text-black" : "text-zinc-500 hover:text-white")}
+                className={cn("px-4 py-1 text-[10px] font-orbitron transition-all", lang === "ta" ? "bg-cyan-500 text-black shadow-[0_0_10px_rgba(0,255,255,0.4)]" : "text-cyan-500/50 hover:text-cyan-400")}
               >
                 தமிழ்
               </button>
@@ -92,29 +97,33 @@ export default function Sidebar() {
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-2 py-4 custom-scrollbar overflow-y-auto">
+        <nav className="flex-1 px-6 space-y-3 py-4 custom-scrollbar overflow-y-auto font-nav">
           {menuItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.placeholder ? "#" : item.href}
-                title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative border",
+                  "flex items-center gap-4 px-4 py-3 transition-all group relative border-l-2",
                   isActive 
-                    ? "bg-primary/15 text-primary border-primary/40 shadow-[0_0_15px_rgba(255,214,0,0.1)]" 
-                    : "text-zinc-500 hover:text-white hover:bg-white/5 border-transparent",
-                  isCollapsed && "justify-center px-0",
-                  item.placeholder && "opacity-50 cursor-not-allowed"
+                    ? "bg-cyan-500/10 text-cyan-400 border-cyan-500 shadow-[0_0_20px_rgba(0,255,255,0.1)]" 
+                    : "text-cyan-500/40 border-transparent hover:text-cyan-300 hover:bg-cyan-500/5 hover:border-cyan-500/30",
+                  isCollapsed && "justify-center px-0 border-l-0",
+                  item.placeholder && "opacity-30 cursor-not-allowed"
                 )}
               >
-                <item.icon size={18} className={cn("flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3", isActive ? "text-primary" : "text-primary")} />
+                <div className={cn("absolute inset-0 bg-cyan-500/5 opacity-0 transition-opacity group-hover:opacity-100")} 
+                     style={{ clipPath: 'polygon(0 0, 95% 0, 100% 20%, 100% 100%, 5% 100%, 0 80%)' }} />
+                
+                <item.icon size={20} className={cn("flex-shrink-0 transition-all duration-500", isActive ? "text-cyan-400 drop-shadow-[0_0_5px_rgba(0,255,255,0.5)]" : "group-hover:text-cyan-400")} />
+                
                 {!isCollapsed && (
-                  <span className="font-bold text-sm tracking-wide">{item.label}</span>
+                  <span className="font-medium text-sm tracking-[0.1em] uppercase">{item.label}</span>
                 )}
-                {item.placeholder && !isCollapsed && (
-                  <span className="absolute right-4 text-[8px] font-black bg-zinc-800 px-1.5 py-0.5 rounded uppercase tracking-tighter">Soon</span>
+                
+                {isActive && !isCollapsed && (
+                  <div className="ml-auto w-1 h-1 bg-cyan-500 animate-pulse" />
                 )}
               </Link>
             );
@@ -122,45 +131,49 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer / User Hub */}
-        <div className="mt-auto p-4 border-t border-white/5 space-y-2">
+        <div className="mt-auto p-6 space-y-4">
           {!isCollapsed && user && (
-            <div className="px-4 py-3 mb-2 bg-black/40 border border-white/5 rounded-2xl flex items-center gap-3 animate-in slide-in-from-left-4 duration-500">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden">
-                {user.photoURL ? (
-                  <Image src={user.photoURL} alt={user.displayName || "User"} width={40} height={40} />
-                ) : (
-                  <UserIcon size={20} className="text-primary" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-white truncate">{user.displayName || "Bee User"}</p>
-                <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
+            <div className="p-4 bg-cyan-500/5 border-t border-b border-cyan-500/20 relative group overflow-hidden">
+               <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/50" />
+               <div className="flex items-center gap-4 relative z-10">
+                <div className="w-10 h-10 border border-cyan-500/30 p-0.5 relative">
+                  <div className="absolute inset-0 bg-cyan-500/10 animate-pulse" />
+                  {user.photoURL ? (
+                    <Image src={user.photoURL} alt={user.displayName || "User"} width={40} height={40} className="relative z-10 opacity-80" />
+                  ) : (
+                    <UserIcon size={20} className="text-cyan-400 relative z-10 mx-auto mt-2" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 font-tech">
+                  <p className="text-[10px] uppercase tracking-tighter text-cyan-500/70">Agent Active</p>
+                  <p className="text-xs font-bold text-cyan-400 truncate tracking-widest">{user.displayName || "BEE-USER"}</p>
+                </div>
               </div>
             </div>
           )}
           
-          <Link 
-            href="/profile"
-            title={isCollapsed ? "Settings" : undefined}
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:bg-white/5 hover:text-white transition-all transform hover:scale-[1.02] active:scale-95",
-              isCollapsed && "justify-center px-0"
-            )}
-          >
-            <UserIcon size={18} className="text-primary" />
-            {!isCollapsed && <span className="font-bold text-sm">{t.sidebar.settings}</span>}
-          </Link>
-          <button 
-            onClick={() => setIsLogoutOpen(true)}
-            title={isCollapsed ? "Logout" : undefined}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all transform hover:scale-[1.02] active:scale-95",
-              isCollapsed && "justify-center px-0"
-            )}
-          >
-            <LogOut size={16} />
-            {!isCollapsed && <span className="font-bold text-xs text-left">{t.sidebar.logout}</span>}
-          </button>
+          <div className="flex flex-col gap-1">
+            <Link 
+              href="/profile"
+              className={cn(
+                "flex items-center gap-4 px-4 py-2 text-cyan-500/60 hover:text-cyan-400 transition-colors font-nav uppercase tracking-widest text-xs",
+                isCollapsed && "justify-center px-0"
+              )}
+            >
+              <UserIcon size={16} />
+              {!isCollapsed && <span>{t.sidebar.settings}</span>}
+            </Link>
+            <button 
+              onClick={() => setIsLogoutOpen(true)}
+              className={cn(
+                "flex items-center gap-4 px-4 py-2 text-red-500/60 hover:text-red-400 transition-colors font-nav uppercase tracking-widest text-xs",
+                isCollapsed && "justify-center px-0"
+              )}
+            >
+              <LogOut size={16} />
+              {!isCollapsed && <span>{t.sidebar.logout}</span>}
+            </button>
+          </div>
         </div>
       </aside>
 

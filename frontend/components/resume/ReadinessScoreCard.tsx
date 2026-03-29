@@ -1,6 +1,8 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { ShieldCheck, TrendingUp } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 
 interface ReadinessScoreCardProps {
   readiness: number;
@@ -8,47 +10,56 @@ interface ReadinessScoreCardProps {
   delta?: number;
 }
 
-const LABEL_COLORS: Record<string, string> = {
-  "Beginner": "text-red-400 bg-red-500/10 border-red-500/20",
-  "Improving": "text-amber-400 bg-amber-500/10 border-amber-500/20",
-  "Interview Ready": "text-sky-400 bg-sky-500/10 border-sky-500/20",
-  "Strong Candidate": "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-};
-
-const BAR_COLORS: Record<string, string> = {
-  "Beginner": "from-red-700 to-red-500",
-  "Improving": "from-amber-700 to-amber-400",
-  "Interview Ready": "from-sky-700 to-sky-400",
-  "Strong Candidate": "from-emerald-700 to-emerald-400",
-};
-
 const ReadinessScoreCard = React.memo(({ readiness, label, delta }: ReadinessScoreCardProps) => {
-  const colorClass = LABEL_COLORS[label] ?? LABEL_COLORS["Improving"];
-  const barClass = BAR_COLORS[label] ?? BAR_COLORS["Improving"];
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
+  const upperLabel = label.toUpperCase();
+  const colorClass = 
+    upperLabel === "BEGINNER" ? "text-red-400 bg-red-500/10 border-red-500/20" :
+    upperLabel === "IMPROVING" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+    upperLabel === "INTERVIEW READY" ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" :
+    upperLabel === "STRONG CANDIDATE" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+    "text-amber-400 bg-amber-500/10 border-amber-500/20";
+
+  const barClass = 
+    upperLabel === "BEGINNER" ? "from-red-900 to-red-500" :
+    upperLabel === "IMPROVING" ? "from-amber-900 to-amber-500" :
+    upperLabel === "INTERVIEW READY" ? "from-cyan-900 to-cyan-500" :
+    upperLabel === "STRONG CANDIDATE" ? "from-emerald-900 to-emerald-500" :
+    "from-amber-900 to-amber-500";
+
+  const displayLabel = 
+    upperLabel === "BEGINNER" ? t.resume.readiness.beginner :
+    upperLabel === "IMPROVING" ? t.resume.readiness.improving :
+    upperLabel === "INTERVIEW READY" ? t.resume.readiness.ready :
+    upperLabel === "STRONG CANDIDATE" ? t.resume.readiness.strong :
+    upperLabel;
 
   return (
-    <div className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-4 animate-in fade-in duration-700">
+    <div className="hud-panel p-6 space-y-5 animate-hud font-nav">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-            <ShieldCheck className="w-4 h-4" />
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-cyan-500/5 border border-cyan-500/20 flex items-center justify-center text-cyan-400"
+               style={{ clipPath: 'polygon(20% 0, 80% 0, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0 80%, 0 20%)' }}>
+            <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-              Resume Readiness
+            <p className="text-[9px] font-orbitron font-bold uppercase tracking-[0.3em] text-cyan-500/40">
+              {t.resume.readiness.title}
             </p>
-            <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bebas font-black tracking-wider">
+            <div className="flex items-baseline gap-3">
+              <p className="text-3xl font-orbitron font-black tracking-tighter text-white">
                 {readiness}%
               </p>
               {delta !== undefined && delta !== 0 && (
                 <span
                   className={cn(
-                    "text-xs font-black animate-in slide-in-from-left-2 duration-300",
+                    "text-xs font-tech font-bold animate-in slide-in-from-left-2 duration-300",
                     delta > 0 ? "text-emerald-400" : "text-red-400"
                   )}
                 >
-                  ({delta > 0 ? "+" : ""}{delta})
+                  [{delta > 0 ? "+" : ""}{delta}]
                 </span>
               )}
             </div>
@@ -57,22 +68,24 @@ const ReadinessScoreCard = React.memo(({ readiness, label, delta }: ReadinessSco
 
         <span
           className={cn(
-            "text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border",
+            "text-[9px] font-orbitron font-bold uppercase tracking-[0.2em] px-4 py-2 border",
             colorClass
           )}
+          style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)' }}
         >
-          {label}
+          {displayLabel}
         </span>
       </div>
 
-      <div className="w-full h-1.5 bg-zinc-900 rounded-full overflow-hidden">
+      <div className="w-full h-1 bg-cyan-950/40 overflow-hidden relative">
         <div
           className={cn(
-            "h-full rounded-full bg-gradient-to-r transition-all duration-1000 ease-out",
+            "h-full bg-gradient-to-r transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,255,255,0.2)]",
             barClass
           )}
           style={{ width: `${readiness}%` }}
         />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.05)_50%,transparent_100%)] animate-[scan-move_3s_linear_infinite]" />
       </div>
     </div>
   );

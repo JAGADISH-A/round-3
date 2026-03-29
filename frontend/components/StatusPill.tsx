@@ -5,31 +5,38 @@
 "use client";
 
 import { VoiceState } from "@/hooks/useVoiceState";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 
 interface StatusPillProps {
   status: VoiceState;
 }
 
 export default function StatusPill({ status }: StatusPillProps) {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
   const config = {
-    idle: { text: "Ready to Start", dotColor: "bg-zinc-500", pingColor: "bg-zinc-500", pulse: false, border: "border-zinc-700", bg: "bg-zinc-800" },
-    listening: { text: "Listening", dotColor: "bg-[#58CC02]", pingColor: "bg-[#58CC02]", pulse: true, border: "border-[#58CC02]/30", bg: "bg-[#58CC02]/10" },
-    thinking: { text: "Thinking", dotColor: "bg-[#FFC800]", pingColor: "bg-[#FFC800]", pulse: true, border: "border-[#FFC800]/30", bg: "bg-[#FFC800]/10" },
-    speaking: { text: "Speaking", dotColor: "bg-[#1CB0F6]", pingColor: "bg-[#1CB0F6]", pulse: true, border: "border-[#1CB0F6]/30", bg: "bg-[#1CB0F6]/10" },
+    idle: { text: t.interview.status.idle, dotColor: "bg-zinc-700", pingColor: "bg-zinc-700", pulse: false, border: "border-zinc-800", bg: "bg-zinc-900/40" },
+    listening: { text: t.interview.status.listening, dotColor: "bg-emerald-500", pingColor: "bg-emerald-500", pulse: true, border: "border-emerald-500/30", bg: "bg-emerald-500/5" },
+    thinking: { text: t.interview.status.thinking, dotColor: "bg-amber-500", pingColor: "bg-amber-500", pulse: true, border: "border-amber-500/30", bg: "bg-amber-500/5" },
+    speaking: { text: t.interview.status.speaking, dotColor: "bg-cyan-500", pingColor: "bg-cyan-500", pulse: true, border: "border-cyan-500/30", bg: "bg-cyan-500/5" },
+    connecting: { text: t.interview.status.connecting, dotColor: "bg-amber-500", pingColor: "bg-amber-500", pulse: true, border: "border-amber-500/30", bg: "bg-amber-500/5" },
   };
 
   const current = config[status];
 
   return (
-    <div className={`flex justify-center items-center gap-3 px-6 py-3 rounded-2xl border-2 border-b-4 transition-all duration-300 ${current.bg} ${current.border}`}>
+    <div className={`flex justify-center items-center gap-3 px-6 py-2.5 border transition-all duration-500 ${current.bg} ${current.border}`}
+         style={{ clipPath: 'polygon(5% 0, 100% 0, 95% 100%, 0 100%)' }}>
       {/* Pulse Animation Wrapper */}
-      <div className="relative flex h-3.5 w-3.5 items-center justify-center shrink-0">
+      <div className="relative flex h-2 w-2 items-center justify-center shrink-0">
         {current.pulse && (
-          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-80 ${current.pingColor} duration-1000`}></span>
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${current.pingColor} duration-1000`}></span>
         )}
-        <span className={`relative inline-flex rounded-full h-3.5 w-3.5 ${current.dotColor}`}></span>
+        <span className={`relative inline-flex rounded-full h-2 w-2 ${current.dotColor}`}></span>
       </div>
-      <span className="text-sm font-black tracking-wider text-white uppercase drop-shadow-sm min-w-[120px] text-center">
+      <span className="text-[10px] font-orbitron font-black tracking-[0.2em] text-cyan-50/80 uppercase min-w-[140px] text-center">
         {current.text}
       </span>
     </div>

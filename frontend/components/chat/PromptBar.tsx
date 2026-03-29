@@ -20,6 +20,7 @@ interface PromptBarProps {
   initialPersona?: string;
   isVoiceEnabled?: boolean;
   onVoiceToggle?: (enabled: boolean) => void;
+  onFileUpload?: (file: File) => void;
 }
 
 export default function PromptBar({ 
@@ -31,8 +32,10 @@ export default function PromptBar({
   onMicToggle, 
   initialPersona,
   isVoiceEnabled,
-  onVoiceToggle
+  onVoiceToggle,
+  onFileUpload
 }: PromptBarProps) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const model = "llama33";
   const { lang } = useLanguage();
   const t = useMemo(() => translations[lang], [lang]);
@@ -80,7 +83,20 @@ export default function PromptBar({
 
       {/* Input Area */}
       <div className="flex items-center gap-3 px-2 py-1">
-        <button className="p-1.5 text-zinc-700 hover:text-[#FFD600] transition-colors shrink-0">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept=".pdf" 
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onFileUpload?.(file);
+          }}
+        />
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+          className="p-1.5 text-zinc-700 hover:text-cyan-400 transition-colors shrink-0"
+        >
           <Paperclip className="w-4 h-4" />
         </button>
         
@@ -113,10 +129,10 @@ export default function PromptBar({
             onClick={onMicToggle}
             type="button"
             className={cn(
-              "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
-              isListening 
-                ? "bg-red-500 text-white animate-pulse" 
-                : "bg-zinc-800 text-zinc-400 hover:text-[#FFD600] border border-white/5"
+               "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
+               isListening 
+                 ? "bg-red-500 text-white animate-pulse" 
+                 : "bg-zinc-800 text-zinc-400 hover:text-cyan-400 border border-white/5"
             )}
           >
             {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -129,7 +145,7 @@ export default function PromptBar({
               "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
               loading || !value.trim() 
                 ? "bg-zinc-800 text-zinc-600 grayscale" 
-                : "bg-[#FFD600] text-black shadow-[0_0_20px_rgba(255,214,0,0.2)] hover:scale-105 active:scale-95"
+                : "bg-cyan-500 text-black shadow-[0_0_20px_rgba(0,255,255,0.2)] hover:scale-105 active:scale-95"
             )}
           >
             {loading ? (

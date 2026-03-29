@@ -4,116 +4,117 @@
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 48 100% 50%;
-    --primary: 48 100% 50%; /* #FFD600 */
-    --primary-foreground: 0 0% 0%;
-    --secondary: 48 100% 50%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 0 0% 10%;
-    --muted-foreground: 48 100% 30%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 48 100% 50%;
+    --background: 220 30% 2%;
+    --foreground: 180 100% 50%;
+    --primary: 180 100% 50%; /* Cyan Neon #00FFFF */
+    --primary-foreground: 220 30% 2%;
+    --secondary: 180 100% 30%;
+    --secondary-foreground: 180 100% 90%;
+    --muted: 220 30% 10%;
+    --muted-foreground: 180 100% 40%;
+    --border: 180 100% 50% / 0.2;
+    --input: 180 100% 50% / 0.1;
+    --ring: 180 100% 50% / 0.5;
   }
 }
 
 @layer base {
   body {
-    @apply bg-black text-white selection:bg-primary/30;
-    font-family: var(--font-grotesk), system-ui, sans-serif;
-    background-image:
-      radial-gradient(circle at 50% -20%, #ffd60010 0%, transparent 50%),
-      radial-gradient(circle at 0% 0%, #ffd60005 0%, transparent 30%);
+    @apply bg-black text-cyan-50 selection:bg-cyan-500/30 font-sans;
+    background-color: #020406;
+    background-image: 
+      linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+      radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 70%);
+    background-size: 40px 40px, 40px 40px, 100% 100%;
     background-attachment: fixed;
-    letter-spacing: -0.01em;
   }
 
-  .font-tamil {
-    font-family: var(--font-tamil), var(--font-inter), system-ui, sans-serif;
+  h1, h2, h3, h4, .font-orbitron {
+    font-family: var(--font-orbitron), sans-serif;
+    @apply tracking-widest uppercase;
   }
 
-  .font-sans {
-    font-family: var(--font-inter), system-ui, sans-serif;
+  .font-tech {
+    font-family: var(--font-tech-mono), monospace;
+  }
+
+  .font-nav {
+    font-family: var(--font-rajdhani), sans-serif;
   }
 }
 
 @layer components {
-  .glass {
-    @apply bg-zinc-900/80 border border-white/10 shadow-lg;
+  /* HUD Panels with bracketed corners */
+  .hud-panel {
+    @apply relative bg-black/60 border border-cyan-500/20 shadow-[0_0_15px_rgba(0,255,255,0.05)];
+    clip-path: polygon(
+      0 10px, 10px 0, 100% 0, 100% calc(100% - 10px), 
+      calc(100% - 10px) 100%, 0 100%
+    );
   }
 
-  .bumblebee-glow {
-    @apply shadow-[0_0_25px_rgba(255,214,0,0.2)];
+  .hud-panel::before {
+    content: '';
+    @apply absolute inset-0 pointer-events-none border border-cyan-500/40;
+    clip-path: polygon(
+      0 0, 20px 0, 20px 2px, 2px 2px, 2px 20px, 0 20px,
+      100% 0, 100% 20px, calc(100% - 2px) 20px, calc(100% - 2px) 2px, calc(100% - 20px) 2px, calc(100% - 20px) 0,
+      100% 100%, calc(100% - 20px) 100%, calc(100% - 20px) calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) calc(100% - 20px), 100% calc(100% - 20px),
+      0 100%, 0 calc(100% - 20px), 2px calc(100% - 20px), 2px calc(100% - 2px), 20px calc(100% - 2px), 20px 100%
+    );
+  }
+
+  .tactical-button {
+    @apply relative px-6 py-2 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 font-orbitron text-sm tracking-widest transition-all duration-300;
+    clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+  }
+
+  .tactical-button:hover {
+    @apply bg-cyan-500/30 text-white shadow-[0_0_20px_rgba(0,255,255,0.3)] scale-105;
+  }
+
+  .scanline {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(0, 255, 255, 0.02) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 100;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    width: 4px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-primary/20 rounded-full hover:bg-primary/40 transition-colors;
+    @apply bg-cyan-500/40 rounded-none hover:bg-cyan-500 transition-colors;
   }
 }
 
-h1, h2, h3, h4, .font-bebas {
-  font-family: 'Bebas Neue', display;
+/* Transitions & Animations */
+@keyframes hud-reveal {
+  from { opacity: 0; transform: scale(0.98) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.font-grotesk {
-  font-family: 'Space Grotesk', sans-serif;
+.animate-hud {
+  animation: hud-reveal 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
-/* Transitions */
-.transition-bumble {
-  @apply transition-all duration-300 ease-in-out;
+@keyframes scan-move {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
 }
 
-/* Score highlight glow — triggered after rescore */
-@keyframes score-glow {
-  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); border-color: rgba(255,255,255,0.05); }
-  20%  { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.3); border-color: rgba(16, 185, 129, 0.6); transform: scale(1.02); }
-  60%  { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); transform: scale(1.01); }
-  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); border-color: rgba(255,255,255,0.05); transform: scale(1); }
-}
-
-.score-highlight {
-  animation: score-glow 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* Optimized Liquid Glass — No heavy blur for smooth scrolling */
-.liquid-glass {
-  @apply bg-[#0c0c0e] border border-white/5 shadow-2xl;
-  background-image: 
-    linear-gradient(to bottom right, rgba(255,255,255,0.03), transparent),
-    radial-gradient(circle at 0% 0%, rgba(255,255,255,0.02) 0%, transparent 50%);
-}
-
-.glass-blur-header {
-  @apply backdrop-blur-md bg-black/40 border-b border-white/10 sticky top-0 z-50;
-}
-
-/* Animations for new feedback loop */
-@keyframes slide-in-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-slide-up {
-  animation: slide-in-up 0.5s ease-out forwards;
-}
-
-@keyframes keyword-pop {
-  0% { transform: scale(0.8); opacity: 0; }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.keyword-entry {
-  animation: keyword-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  will-change: transform, opacity;
+.scan-beam {
+  @apply absolute left-0 right-0 h-1 bg-cyan-500/20 blur-sm pointer-events-none;
+  animation: scan-move 4s linear infinite;
 }

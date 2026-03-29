@@ -6,6 +6,8 @@ import { useResumeStore } from "@/store/useResumeStore";
 import { cn } from "@/lib/utils";
 import BeforeAfterPanel from "./BeforeAfterPanel";
 import ScoreDeltaBadge from "./ScoreDeltaBadge";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 
 interface BulletRewriterProps {
   targetRole?: string;
@@ -26,6 +28,8 @@ const BulletRewriter = React.memo(({
   onScoreUpdate,
   onBulletAccepted,
 }: BulletRewriterProps) => {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [bullet, setBullet] = useState(externalBullet);
   const [rewritten, setRewritten] = useState("");
   const [improvements, setImprovements] = useState<string[]>([]);
@@ -159,8 +163,8 @@ const BulletRewriter = React.memo(({
           <Wand2 className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-2xl font-bebas tracking-wide uppercase">Bullet <span className="text-amber-400">Rewriter</span></h3>
-          <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.3em]">AI-Powered Impact Statement Generator</p>
+          <h3 className="text-2xl font-bebas tracking-wide uppercase">{t.resume.rewriter.title} <span className="text-amber-400">{t.resume.rewriter.accent}</span></h3>
+          <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.3em]">{t.resume.rewriter.subtitle}</p>
         </div>
 
         {/* Score badge — shown after rescore */}
@@ -178,11 +182,11 @@ const BulletRewriter = React.memo(({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input */}
         <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Weak Bullet</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{t.resume.rewriter.weak_label}</label>
           <textarea
             value={bullet}
             onChange={(e) => setBullet(e.target.value)}
-            placeholder={`e.g., "Developed APIs for the backend"`}
+            placeholder={t.resume.rewriter.placeholder}
             rows={4}
             className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm text-zinc-300 placeholder:text-zinc-700 font-mono resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
           />
@@ -192,7 +196,7 @@ const BulletRewriter = React.memo(({
             className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-            {isLoading ? "Rewriting..." : "Rewrite with AI"}
+            {isLoading ? t.resume.rewriter.rewriting : t.resume.rewriter.rewrite_btn}
           </button>
 
           {/* Inline delta feedback near button */}
@@ -213,7 +217,7 @@ const BulletRewriter = React.memo(({
 
         {/* Output */}
         <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Impact Statement</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{t.resume.rewriter.impact_label}</label>
           <div className={`relative min-h-[100px] bg-black/40 border rounded-2xl px-5 py-4 transition-all ${rewritten ? "border-primary/20" : "border-white/5"}`}>
             {rewritten ? (
               <>
@@ -236,7 +240,7 @@ const BulletRewriter = React.memo(({
                       )}
                     >
                       <Check className="w-3.5 h-3.5" />
-                      {applied ? "Applied!" : "Apply to Resume"}
+                      {applied ? t.resume.rewriter.applied : t.resume.rewriter.apply}
                     </button>
                     <button
                       onClick={handleCopy}
@@ -249,14 +253,14 @@ const BulletRewriter = React.memo(({
                       )}
                     >
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copied ? "Copied!" : "Copy to Editor"}
+                      {copied ? t.resume.rewriter.copied : t.resume.rewriter.copy}
                     </button>
                   </div>
                 </div>
               </>
             ) : (
               <p className="text-sm text-zinc-700 italic font-mono">
-                {isLoading ? "AI is crafting your impact statement..." : "Your enhanced bullet will appear here"}
+                {isLoading ? t.resume.rewriter.loading : t.resume.rewriter.empty}
               </p>
             )}
           </div>
@@ -265,7 +269,7 @@ const BulletRewriter = React.memo(({
           {improvements.length > 0 && (
             <div className="space-y-1.5 mt-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-amber-400/60 flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3" /> What was improved
+                <Sparkles className="w-3 h-3" /> {t.resume.rewriter.improved}
               </p>
               {improvements.map((imp, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs text-zinc-400">
@@ -278,7 +282,7 @@ const BulletRewriter = React.memo(({
 
           {rewritten && !improvements.length && (
             <p className="text-[9px] text-zinc-700 font-mono">
-              Optimized for: {targetRole} · ATS-ready · Action-verb led
+              {t.resume.rewriter.optimized.replace('{role}', targetRole)}
             </p>
           )}
         </div>

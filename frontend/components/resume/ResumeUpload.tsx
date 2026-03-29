@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useMemo } from "react";
-import { Upload, X, CheckCircle, Loader2, Target, Briefcase, GraduationCap, Code2, AlertCircle, RefreshCcw, ChevronDown } from "lucide-react";
+import { Upload, X, CheckCircle, Loader2, Target, Briefcase, GraduationCap, Code2, AlertCircle, RefreshCcw, ChevronDown, Sparkles } from "lucide-react";
 import { ENDPOINTS } from "@/lib/api-config";
 import { cn } from "@/lib/utils";
 import { ResumeAnalysis } from "@/types/resume";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 import { useResumeStore } from "@/store/useResumeStore";
 
 interface ResumeUploadProps {
@@ -12,6 +14,8 @@ interface ResumeUploadProps {
 }
 
 const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const setStatus = useResumeStore((state) => state.setStatus);
   const setIsReanalyzingGlobal = useResumeStore((state) => state.setIsReanalyzing);
   
@@ -50,8 +54,10 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
 
     const formData = new FormData();
     formData.append("file", file);
-    // Use new /api/resume/upload endpoint which supports jd_text
-    const url = new URL(ENDPOINTS.RESUME_UPLOAD);
+    
+    // Safety check for relative URLs
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const url = new URL(ENDPOINTS.RESUME_UPLOAD, baseUrl);
     if (jdText.trim()) url.searchParams.set("jd_text", jdText.trim());
 
     try {
@@ -75,7 +81,6 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
       setError(err.message || "An error occurred.");
     } finally {
       setIsUploading(false);
-      // Status will be set to ANALYZED by onAnalysisComplete -> setInitialAnalysis -> setAnalysis
     }
   };
 
@@ -126,33 +131,44 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
   }, [analysis]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 font-nav">
       {/* JD Paste Toggle */}
       {!analysis && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <button
             onClick={() => setShowJdInput(!showJdInput)}
-            className={`w-full flex items-center justify-between px-5 py-3 rounded-2xl border text-xs font-bold uppercase tracking-widest transition-all ${
+            className={`w-full flex items-center justify-between px-6 py-4 border text-[10px] font-orbitron font-bold uppercase tracking-[0.3em] transition-all ${
               showJdInput
-                ? "border-primary/30 bg-primary/5 text-primary"
-                : "border-white/5 bg-transparent text-zinc-500 hover:border-white/10"
+                ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.1)]"
+                : "border-cyan-500/10 bg-transparent text-cyan-500/30 hover:border-cyan-500/30 hover:text-cyan-400"
             }`}
+            style={{ clipPath: 'polygon(2% 0, 100% 0, 98% 100%, 0 100%)' }}
           >
-            <span>{showJdInput ? "✓ Job Description Added" : "+ Paste Job Description (Optional)"}</span>
-            <span className="text-[10px] font-mono text-zinc-600">{showJdInput ? "removes for neutral analysis" : "adds JD Match Score"}</span>
+            <span className="flex items-center gap-3">
+              <div className={cn("w-1.5 h-1.5 bg-current animate-pulse", !showJdInput && "opacity-20")} />
+              {showJdInput ? t.resume.upload.protocol_active : t.resume.upload.jd_override}
+            </span>
+            <span className="text-[9px] font-tech text-cyan-500/20">{showJdInput ? t.resume.upload.engine_ready : t.resume.upload.optional}</span>
           </button>
+          
           {showJdInput && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="animate-hud">
               <textarea
                 value={jdText}
                 onChange={(e) => setJdText(e.target.value)}
-                placeholder="Paste the full job description here to get a JD Match Score alongside your ATS Score..."
+                placeholder={t.resume.upload.placeholder}
                 rows={6}
-                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-xs text-zinc-300 placeholder:text-zinc-700 font-mono resize-none focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+                className="w-full bg-cyan-950/20 border border-cyan-500/10 px-6 py-5 text-[11px] text-cyan-50 placeholder:text-cyan-500/20 font-tech resize-none focus:outline-none focus:border-cyan-500/40 transition-all custom-scrollbar"
+                style={{ clipPath: 'polygon(0 0, 98% 0, 100% 15%, 100% 100%, 2% 100%, 0 85%)' }}
               />
-              <p className="text-[9px] text-zinc-700 font-mono mt-1 px-1">
-                {jdText.length} chars · AI will compare keywords, tech stack, and semantic alignment
-              </p>
+              <div className="flex justify-between items-center mt-2 px-2 text-[8px] text-cyan-500/30 font-tech uppercase tracking-widest">
+                <span>{t.resume.upload.buffer}: {jdText.length} // {t.resume.upload.signals}</span>
+                <div className="flex gap-1">
+                   <div className="w-1 h-1 bg-cyan-500/40" />
+                   <div className="w-1 h-1 bg-cyan-500/20" />
+                   <div className="w-1 h-1 bg-cyan-500/10" />
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -161,14 +177,25 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
       {!analysis && !isUploading && (
         <div 
           onClick={() => fileInputRef.current?.click()}
-          className="group relative h-48 border-2 border-dashed border-white/5 rounded-[32px] flex flex-col items-center justify-center cursor-pointer hover:border-primary/20 hover:bg-primary/5 transition-all duration-500 overflow-hidden"
+          className="group relative h-56 border border-cyan-500/10 bg-black/40 flex flex-col items-center justify-center cursor-pointer hover:border-cyan-500/40 transition-all duration-500 overflow-hidden"
+          style={{ clipPath: 'polygon(5% 0, 95% 0, 100% 15%, 100% 85%, 95% 100%, 5% 100%, 0 85%, 0 15%)' }}
         >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Upload className="w-8 h-8 text-primary opacity-40 group-hover:opacity-100" />
+            <div className="scan-beam" />
+            <div className="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            
+            <div className="relative w-20 h-20 mb-6 border border-cyan-500/20 flex items-center justify-center group-hover:border-cyan-400 group-hover:shadow-[0_0_25px_rgba(0,255,255,0.2)] transition-all bg-black">
+                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-500" />
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyan-500" />
+                <Upload className="w-10 h-10 text-cyan-400 opacity-20 group-hover:opacity-100 transition-all group-hover:scale-110" />
             </div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-white transition-colors">Inject Resume PDF</p>
-            <p className="text-[10px] text-zinc-700 font-mono mt-2">Max 5MB • Neutral Extraction</p>
+
+            <p className="text-[11px] font-orbitron font-bold uppercase tracking-[0.4em] text-cyan-500/40 group-hover:text-cyan-400 transition-colors">
+              {t.resume.upload.inject}
+            </p>
+            <p className="text-[9px] text-cyan-500/20 font-tech mt-3 uppercase tracking-widest">
+              {t.resume.upload.limit}
+            </p>
+            
             <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -180,93 +207,118 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
       )}
 
       {isUploading && (
-        <div className="h-48 border-2 border-white/5 rounded-[32px] flex flex-col items-center justify-center space-y-4">
-             <div className="relative w-12 h-12">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <div className="hud-panel h-56 flex flex-col items-center justify-center space-y-6 relative overflow-hidden">
+             <div className="scan-beam" />
+             <div className="relative w-16 h-16 border border-cyan-500/20 flex items-center justify-center">
+                <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
+                    <div className="w-2 h-2 bg-cyan-400 animate-ping" />
                 </div>
              </div>
-             <p className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Scanning Neural Structures...</p>
+             <p className="text-[10px] font-orbitron font-bold text-cyan-400 uppercase tracking-[0.4em] animate-pulse">
+               {t.resume.upload.mapping}
+             </p>
         </div>
       )}
 
       {normalized && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in zoom-in-95 duration-700">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-hud">
             {/* Metadata Selection */}
-            <div className="liquid-glass p-8 rounded-[32px] border border-white/5 space-y-6">
+            <div className="hud-panel p-10 space-y-8 relative overflow-hidden group">
+                <div className="scan-beam" />
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Target className="w-5 h-5 text-[#3b82f6]" />
-                        <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Target Role Tuning</h4>
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                          <Target className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-orbitron font-bold text-cyan-500/40 uppercase tracking-widest">{t.resume.upload.tuning}</p>
+                          <h4 className="text-[11px] font-orbitron font-bold uppercase tracking-widest text-white">{t.resume.upload.role_protocol}</h4>
+                        </div>
                     </div>
-                    {isReanalyzing && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
+                    {isReanalyzing && <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />}
                 </div>
 
-                <div className="space-y-3">
-                    <p className="text-[10px] text-zinc-500 font-mono italic">AI Inference: {normalized.inferred_role}</p>
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-[10px] text-cyan-500/60 font-tech uppercase tracking-widest bg-cyan-500/10 px-3 py-1 border-l-2 border-cyan-400">
+                       <Sparkles className="w-3 h-3" />
+                       {t.resume.upload.auto_inference}: {normalized.inferred_role}
+                    </div>
                     <div className="relative group">
                         <select 
                             value={selectedRole}
                             onChange={(e) => handleRoleReanalyze(e.target.value)}
-                            className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-3 text-sm font-bold appearance-none hover:border-primary/30 transition-colors focus:outline-none focus:ring-1 focus:ring-primary/50"
+                            className="w-full bg-black/60 border border-cyan-500/20 px-6 py-4 text-xs font-orbitron font-bold appearance-none hover:border-cyan-500/40 transition-colors focus:outline-none text-cyan-50"
                         >
-                            {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                            {roles.map(r => <option key={r} value={r} className="bg-black">{r.toUpperCase()}</option>)}
                         </select>
-                        <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 pointer-events-none" />
+                        <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500/40 pointer-events-none" />
                     </div>
-                    <p className="text-[9px] text-zinc-600 leading-relaxed font-mono">Selecting a role re-evaluates your ATS score and skill gaps against production roadmaps.</p>
+                    <p className="text-[9px] text-cyan-500/30 leading-relaxed font-tech uppercase tracking-widest">
+                       {t.resume.upload.integrity}
+                    </p>
                 </div>
 
-                <div className="pt-6 border-t border-white/5 space-y-4">
-                     <div className="flex items-center gap-3">
-                        <Code2 className="w-5 h-5 text-primary" />
-                        <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Primary Skills</h4>
+                <div className="pt-8 border-t border-cyan-500/10 space-y-6">
+                     <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                          <Code2 className="w-5 h-5" />
+                        </div>
+                        <h4 className="text-[11px] font-orbitron font-bold uppercase tracking-widest text-cyan-500/40">{t.resume.upload.core_skills}</h4>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3">
                         {normalized.skills.map((s: string, i: number) => (
-                            <span key={i} className="px-3 py-1 bg-primary/5 border border-primary/10 rounded-lg text-[10px] text-primary font-bold">
+                            <span key={i} 
+                                  className="px-4 py-2 bg-cyan-500/5 border border-cyan-500/10 text-[10px] text-cyan-400 font-tech font-bold uppercase tracking-wider"
+                                  style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)' }}>
                                 {s}
                             </span>
                         ))}
-                        {normalized.skills.length === 0 && <p className="text-[10px] text-zinc-600 italic">No skills detected</p>}
+                        {normalized.skills.length === 0 && <p className="text-[10px] text-zinc-700 italic font-tech">{t.resume.upload.no_signals}</p>}
                     </div>
                 </div>
             </div>
 
             {/* Quick Summary / Experience */}
-            <div className="liquid-glass p-8 rounded-[32px] border border-white/5 space-y-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 opacity-5">
-                    <Briefcase className="w-24 h-24" />
+            <div className="hud-panel p-10 space-y-8 relative overflow-hidden group">
+                <div className="scan-beam" />
+                <div className="absolute -top-10 -right-10 p-10 opacity-5 pointer-events-none">
+                    <Briefcase className="w-48 h-48 text-cyan-500" />
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <Briefcase className="w-5 h-5 text-amber-500" />
-                    <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Experience Impact</h4>
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                      <Briefcase className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-[11px] font-orbitron font-bold uppercase tracking-widest text-white">{t.resume.upload.impact_history}</h4>
                 </div>
 
-                <div className="space-y-4 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-6 max-h-[220px] overflow-y-auto pr-4 custom-scrollbar">
                     {normalized.experience.map((exp: any, i: number) => (
-                        <div key={i} className="border-l-2 border-amber-500/20 pl-4 py-1">
-                            <p className="text-xs font-bold">{exp.title} <span className="text-zinc-600 font-mono text-[10px]">@ {exp.company}</span></p>
-                            <p className="text-[10px] text-zinc-500 mt-1 italic">{exp.impact}</p>
+                        <div key={i} className="border-l-2 border-cyan-500/20 pl-6 py-2 bg-cyan-500/5 transition-all hover:bg-cyan-500/10 hover:border-cyan-400">
+                            <p className="text-[11px] font-orbitron font-bold text-white tracking-widest">
+                                {exp.title.toUpperCase()} 
+                                <span className="text-cyan-500/40 font-tech text-[9px] ml-2">// {exp.company.toUpperCase()}</span>
+                            </p>
+                            <p className="text-[10px] text-cyan-500/40 mt-2 italic font-tech tracking-wide leading-relaxed">{exp.impact}</p>
                         </div>
                     ))}
-                    {normalized.experience.length === 0 && <p className="text-xs text-zinc-600 italic">No professional experience detected</p>}
+                    {normalized.experience.length === 0 && <p className="text-[10px] text-zinc-700 italic font-tech uppercase tracking-widest">{t.resume.upload.empty_history}</p>}
                 </div>
 
-                 <div className="pt-4 flex items-center justify-between">
-                      <div className="flex flex-col">
-                         <span className="text-[10px] uppercase text-zinc-600 font-bold">Project Pulse</span>
-                         <span className="text-sm font-bold text-white">{normalized.projects.length} Active Modules</span>
+                 <div className="pt-8 flex items-center justify-between border-t border-cyan-500/10">
+                      <div className="flex flex-col gap-1">
+                         <span className="text-[9px] uppercase text-cyan-500/30 font-orbitron font-bold tracking-[0.3em]">{t.resume.upload.module_sync}</span>
+                         <span className="text-sm font-orbitron font-bold text-white tracking-[0.2em]">{normalized.projects.length} {t.resume.upload.active_chunks}</span>
                       </div>
                       <button 
                          onClick={() => { 
                            useResumeStore.getState().resetStore();
                          }}
-                         className="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all group"
+                         className="w-12 h-12 flex items-center justify-center border border-cyan-500/20 text-cyan-500/40 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-all group"
+                         style={{ clipPath: 'polygon(20% 0, 80% 0, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0 80%, 0 20%)' }}
                       >
-                         <RefreshCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
+                         <RefreshCcw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-700" />
                       </button>
                  </div>
             </div>
@@ -274,9 +326,10 @@ const ResumeUpload = React.memo(({ onAnalysisComplete }: ResumeUploadProps) => {
       )}
 
       {error && (
-        <div className="p-4 bg-red-900/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-bounce">
-          <AlertCircle className="w-5 h-5 text-red-500" />
-          <p className="text-[10px] font-black uppercase text-red-500 tracking-widest">{error}</p>
+        <div className="p-6 border border-red-500/20 bg-red-500/10 flex items-center gap-4 animate-hud"
+             style={{ clipPath: 'polygon(2% 0, 100% 0, 98% 100%, 0 100%)' }}>
+          <AlertCircle className="w-6 h-6 text-red-400" />
+          <p className="text-[10px] font-orbitron font-bold uppercase text-red-400 tracking-[0.4em]">{error}</p>
         </div>
       )}
     </div>

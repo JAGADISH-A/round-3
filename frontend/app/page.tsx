@@ -8,89 +8,101 @@ import { motion } from "framer-motion";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -ml-48 -mb-48 pointer-events-none" />
+    <div className="min-h-screen bg-[#020406] text-cyan-50 relative overflow-hidden font-nav">
+      {/* HUD Background Elements */}
+      <div className="scanline" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[150px] pointer-events-none" />
+      
+      {/* Grid Pattern overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00ffff05_1px,transparent_1px),linear-gradient(to_bottom,#00ffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
 
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between p-8 max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10">
-            <Image src="/logo.png" alt="BumbleBee Logo" fill className="object-contain" />
+      <nav className="relative z-10 flex items-center justify-between p-10 max-w-7xl mx-auto font-orbitron">
+        <div className="flex items-center gap-4 group">
+          <div className="relative w-12 h-12 border border-cyan-500/30 p-1 transition-all group-hover:border-cyan-400 group-hover:shadow-[0_0_15px_rgba(0,255,255,0.2)]">
+            <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-cyan-500" />
+            <div className="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-cyan-500" />
+            <Image src="/logo.png" alt="BumbleBee Logo" fill className="object-contain opacity-80" />
           </div>
-          <span className="text-2xl font-bebas tracking-widest text-white">BumbleBee <span className="text-primary">AI</span></span>
+          <span className="text-2xl tracking-[0.4em] text-white">HIVE <span className="text-cyan-400">OS</span></span>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center gap-6 text-sm font-bold text-zinc-400 uppercase tracking-widest">
-            <Link href="#features" className="hover:text-primary transition-colors">Features</Link>
-            <Link href="#about" className="hover:text-primary transition-colors">About</Link>
+        <div className="flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8 text-[10px] tracking-[0.3em] font-bold text-cyan-500/50 uppercase">
+            <Link href="#features" className="hover:text-cyan-400 transition-colors py-2 border-b border-transparent hover:border-cyan-400">Features</Link>
+            <Link href="#intel" className="hover:text-cyan-400 transition-colors py-2 border-b border-transparent hover:border-cyan-400">Intelligence</Link>
           </div>
-          <Link href="/auth" className="px-6 py-2.5 bg-primary text-black rounded-xl font-bold text-sm tracking-wider hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(255,214,0,0.3)]">
-            Login
+          <Link href="/auth" className="tactical-button">
+            INITIALIZE
           </Link>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <main className="relative z-10 h-[calc(100vh-100px)] flex flex-col items-center justify-center px-6">
+      <main className="relative z-10 min-h-[calc(100vh-120px)] flex flex-col items-center justify-center px-10 py-20">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center space-y-8 max-w-4xl"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center space-y-12 max-w-5xl"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest">
-            <Sparkles className="w-3.5 h-3.5" /> Next Gen Career Platform
+          <div className="inline-flex items-center gap-3 px-6 py-2 border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 text-[10px] font-orbitron tracking-[0.4em] uppercase animate-pulse">
+            <Sparkles className="w-3.5 h-3.5" /> STRATEGIC CAREER INTERFACE
           </div>
 
-          <h1 className="text-7xl md:text-8xl font-bebas leading-[0.85] tracking-tight">
-            YOUR AI-POWERED <br />
-            <span className="text-primary italic">CAREER ASSISTANT</span>
+          <h1 className="text-6xl md:text-8xl font-orbitron leading-[1.1] tracking-tighter">
+            ELEVATE YOUR <br />
+            <span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(0,255,255,0.4)]">DIGITAL PERSONA</span>
           </h1>
 
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-medium">
-            Master your interviews, build world-class resumes, and unlock your full potential <br className="hidden md:block" /> with the power of intelligent career coaching.
+          <p className="text-lg md:text-xl text-cyan-500/60 max-w-3xl mx-auto leading-relaxed font-nav tracking-wide font-medium">
+            AI-powered interview simulation, semantic resume hardware, <br className="hidden md:block" /> and neural roadmap synthesis for the modern elite developer.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6 font-orbitron">
             <Link 
               href="/auth" 
-              className="group relative px-10 py-5 bg-primary text-black rounded-2xl font-bold text-lg flex items-center gap-3 transition-all hover:scale-105 shadow-[0_0_40px_rgba(255,214,0,0.2)]"
+              className="group relative px-12 py-5 bg-cyan-500 text-black font-bold text-lg tracking-widest transition-all hover:scale-105 shadow-[0_0_40px_rgba(0,255,255,0.3)]"
+              style={{ clipPath: 'polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%)' }}
             >
-              Let's Start 
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <span className="flex items-center gap-3">
+                ENTER ARENA 
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
             </Link>
             <Link 
               href="/auth" 
-              className="px-10 py-5 bg-zinc-900 border border-white/5 text-white rounded-2xl font-bold text-lg hover:bg-zinc-800 transition-all"
+              className="px-12 py-5 border border-cyan-500/30 text-cyan-400 font-bold text-lg tracking-widest hover:bg-cyan-500/5 transition-all"
+              style={{ clipPath: 'polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%)' }}
             >
-              Watch Demo
+              MISSION DEMO
             </Link>
           </div>
         </motion.div>
 
-        {/* Floating Features */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mt-32 max-w-5xl w-full">
+        {/* HUD Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-32 max-w-6xl w-full px-4">
           {[
-            { icon: Shield, label: "Secure Auth", desc: "Firebase Protected" },
-            { icon: Zap, label: "RAG AI", desc: "Expert Context" },
-            { icon: Globe, label: "Multilingual", desc: "English & Tamil" },
+            { icon: Shield, label: "Neural Auth", desc: "Firebase Core" },
+            { icon: Zap, label: "RAG Engine", desc: "Expert Context" },
+            { icon: Globe, label: "Multilingual", desc: "EN + TA Support" },
             { icon: Sparkles, label: "Vision Lab", desc: "AI Body Analysis" },
           ].map((item, i) => (
             <motion.div 
               key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 + i * 0.1 }}
-              className="flex flex-col items-center text-center gap-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 + i * 0.1, duration: 0.8 }}
+              className="hud-panel p-6 group cursor-default transition-all hover:border-cyan-500/50"
             >
-              <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center">
-                <item.icon className="w-6 h-6 text-primary" />
-              </div>
-              <div className="space-y-0.5">
-                <h3 className="font-bold text-sm tracking-widest uppercase">{item.label}</h3>
-                <p className="text-xs text-zinc-500 font-medium">{item.desc}</p>
+              <div className="flex flex-col items-center text-center gap-5">
+                <div className="w-14 h-14 bg-cyan-500/5 border border-cyan-500/20 flex items-center justify-center transition-all group-hover:scale-110 group-hover:border-cyan-400 group-hover:shadow-[0_0_15px_rgba(0,255,255,0.1)]">
+                  <item.icon className="w-7 h-7 text-cyan-400" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-orbitron font-bold text-xs tracking-[0.2em] text-cyan-400">{item.label}</h3>
+                  <p className="text-[10px] text-cyan-500/40 uppercase font-tech tracking-widest">{item.desc}</p>
+                </div>
               </div>
             </motion.div>
           ))}

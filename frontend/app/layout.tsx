@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Inter, Bebas_Neue, Space_Grotesk, Noto_Sans_Tamil } from "next/font/google";
+import { Inter, Orbitron, Share_Tech_Mono, Rajdhani, Noto_Sans_Tamil } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import FontWrapper from "@/components/FontWrapper";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const bebas = Bebas_Neue({ weight: "400", subsets: ["latin"], variable: "--font-bebas" });
-const grotesk = Space_Grotesk({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-grotesk" });
+const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron" });
+const techMono = Share_Tech_Mono({ weight: "400", subsets: ["latin"], variable: "--font-tech-mono" });
+const rajdhani = Rajdhani({ weight: ["300", "400", "500", "600", "700"], subsets: ["latin"], variable: "--font-rajdhani" });
 const tamil = Noto_Sans_Tamil({ weight: ["400", "500", "600", "700"], subsets: ["tamil"], variable: "--font-tamil" });
 
 export const metadata: Metadata = {
-  title: "BumbleBee AI | Your AI Career Assistant",
-  description: "AI-Powered Career Readiness, Resumes, and Interviews",
+  title: "BumbleBee AI | Strategic Hub",
+  description: "AI Interview Simulation & Career Diagnostic Terminal",
 };
 
 export default function RootLayout({
@@ -21,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${bebas.variable} ${grotesk.variable} ${tamil.variable} bg-black text-white dark`}>
+    <html lang="en" className={`${inter.variable} ${orbitron.variable} ${techMono.variable} ${rajdhani.variable} ${tamil.variable} bg-black text-white dark`}>
       <body className="antialiased min-h-screen">
         <AuthProvider>
           <LanguageProvider>

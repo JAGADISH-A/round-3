@@ -29,102 +29,127 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-black to-black">
-      <div className="w-full max-w-md space-y-8 bg-zinc-900/50 p-8 rounded-3xl border border-white/5 backdrop-blur-xl relative overflow-hidden">
-        {/* Glow effect */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/20 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-[#020406] flex items-center justify-center p-6 relative overflow-hidden font-nav">
+      {/* Background Decorative Elements */}
+      <div className="scanline" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00ffff05_1px,transparent_1px),linear-gradient(to_bottom,#00ffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none opacity-50" />
+      
+      <div className="hud-panel w-full max-w-lg p-10 relative overflow-hidden animate-hud">
+        {/* Subtle Scan Beam Overlay */}
+        <div className="scan-beam" />
         
         <div className="relative">
-          <div className="flex flex-col items-center text-center space-y-4">
-            <div className="relative w-20 h-20 mb-2">
-              <Image src="/logo.png" alt="BumbleBee Logo" fill className="object-contain" />
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="relative w-16 h-16 mb-2 border border-cyan-500/30 p-1">
+              <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-cyan-500" />
+              <div className="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-cyan-500" />
+              <Image src="/logo.png" alt="BumbleBee Logo" fill className="object-contain opacity-80" />
             </div>
-            <h2 className="text-4xl font-bebas tracking-wider text-primary">
-              {isLogin ? "Welcome Back" : "Join the Hive"}
-            </h2>
-            <p className="text-zinc-400 font-medium">
-              {isLogin ? "Login to your career dashboard" : "Create your BumbleBee account"}
+            
+            <div className="space-y-1">
+              <p className="text-[10px] font-orbitron text-cyan-500/50 uppercase tracking-[0.4em]">System Access</p>
+              <h2 className="text-4xl font-orbitron tracking-tighter text-cyan-400 drop-shadow-[0_0_10px_rgba(0,255,255,0.4)]">
+                {isLogin ? "VERIFY_USER" : "INITIALIZE_ID"}
+              </h2>
+            </div>
+            
+            <p className="text-cyan-500/60 font-medium text-sm max-w-xs">
+              {isLogin ? "Authenticate credentials to HIVE core" : "Registering new hardware ID in Hive database"}
             </p>
           </div>
 
-          <div className="mt-8 space-y-4">
+          <div className="mt-10 space-y-6">
             {!isPhoneMode ? (
               <>
                 <button
                   onClick={handleGoogleLogin}
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-3 bg-white text-black h-14 rounded-2xl font-bold hover:bg-zinc-200 transition-all disabled:opacity-50"
+                  className="tactical-button w-full h-14"
                 >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Chrome className="w-5 h-5" />}
-                  Continue with Google
+                  <span className="flex items-center justify-center gap-4">
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Chrome className="w-5 h-5" />}
+                    CONTINUE_WITH_GOOGLE
+                  </span>
                 </button>
                 
                 <button
                   onClick={() => setIsPhoneMode(true)}
-                  className="w-full flex items-center justify-center gap-3 bg-zinc-800 text-white h-14 rounded-2xl font-bold hover:bg-zinc-700 transition-all border border-white/5"
+                  className="w-full h-14 border border-cyan-500/20 bg-cyan-500/5 text-cyan-500 hover:bg-cyan-500/10 hover:border-cyan-500/50 transition-all font-orbitron text-[11px] tracking-[0.3em] font-bold"
+                  style={{ clipPath: 'polygon(5% 0, 100% 0, 95% 100%, 0 100%)' }}
                 >
-                  <Phone className="w-5 h-5" />
-                  Sign in with Phone
+                  <span className="flex items-center justify-center gap-4">
+                    <Phone className="w-4 h-4" />
+                    PHONE_PROTOCOL
+                  </span>
                 </button>
               </>
             ) : (
-              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                 <button 
                   onClick={() => setIsPhoneMode(false)}
-                  className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-4"
+                  className="flex items-center gap-2 text-cyan-500/50 hover:text-cyan-400 transition-colors mb-4 font-tech text-[10px] uppercase tracking-widest"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Back to options
+                  <ArrowLeft className="w-3 h-3" /> [ back_to_root ]
                 </button>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest ml-1">Phone Number</label>
-                  <input
-                    type="tel"
-                    placeholder="+91 99999 99999"
-                    className="w-full bg-zinc-800 border-white/5 border rounded-2xl h-14 px-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-cyan-500/40 uppercase tracking-[0.3em] ml-1 font-orbitron">Phone_Address</label>
+                  <div className="relative group">
+                    <input
+                      type="tel"
+                      placeholder="+91 XXXX XXXX"
+                      className="w-full bg-cyan-500/5 border-cyan-500/20 border px-6 h-14 text-cyan-50 font-tech focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                      style={{ clipPath: 'polygon(0 0, 97% 0, 100% 20%, 100% 100%, 3% 100%, 0 80%)' }}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                    <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-500/40" />
+                    <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyan-500/40" />
+                  </div>
                 </div>
 
-                <button className="w-full bg-primary text-black h-14 rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(255,214,0,0.3)]">
-                  Send OTP
+                <button className="tactical-button w-full h-14">
+                  SEND_SIGNAL_OTP
                 </button>
               </div>
             )}
 
-            <div className="relative py-4">
+            <div className="relative py-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/5"></div>
+                <div className="w-full border-t border-cyan-500/10"></div>
               </div>
-              <div className="relative flex justify-center text-xs uppercase font-bold tracking-widest">
-                <span className="bg-zinc-900 border border-white/5 px-4 py-1 rounded-full text-zinc-500">OR</span>
+              <div className="relative flex justify-center text-[9px] uppercase font-bold tracking-[0.5em]">
+                <span className="bg-[#0c0c0e] border border-cyan-500/20 px-6 py-1.5 text-cyan-500/40">OR_GATE</span>
               </div>
             </div>
 
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="w-full text-zinc-400 hover:text-primary transition-colors text-sm font-bold"
+              className="w-full text-cyan-500/40 hover:text-cyan-400 transition-colors text-[11px] font-orbitron font-bold tracking-widest"
             >
-              {isLogin ? "Need an account? Register here" : "Already have an account? Login"}
+              {isLogin ? ">> REQUEST_NEW_HARDWARE_ID" : ">> RETURN_TO_VERIFICATION"}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Error Modal */}
+      {/* Error Interface */}
       {error && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-          <div className="bg-zinc-900 border border-red-500/20 p-8 rounded-3xl max-w-sm w-full text-center space-y-4">
-            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
-              <div className="w-8 h-8 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-6 z-50">
+          <div className="hud-panel p-10 max-w-sm w-full text-center space-y-6 animate-hud border-red-500/30">
+            <div className="w-20 h-20 bg-red-500/5 border border-red-500/20 flex items-center justify-center mx-auto">
+              <div className="w-10 h-10 border-2 border-red-500 border-t-transparent animate-spin" />
             </div>
-            <h3 className="text-xl font-bold text-white tracking-tight">{error}</h3>
+            <div className="space-y-2">
+               <p className="text-[10px] font-orbitron text-red-500/50 uppercase tracking-[0.3em]">Access_Denied</p>
+               <h3 className="text-xl font-bold text-red-500 tracking-tight font-tech">ERROR: {error}</h3>
+            </div>
             <button 
               onClick={() => setError(null)}
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl h-12 font-bold transition-all"
+              className="w-full px-6 py-3 border border-red-500/40 bg-red-500/10 text-red-500 font-orbitron text-[11px] tracking-widest hover:bg-red-500/20 transition-all"
             >
-              Dismiss
+              [ CLEAR_EXCEPTION ]
             </button>
           </div>
         </div>

@@ -144,60 +144,66 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
     readiness >= 40 ? 'Improving' : 'Beginner';
 
   return (
-    <div className="flex flex-col h-[calc(100vh-72px)] w-full overflow-hidden">
-
+    <div className="flex flex-col h-[calc(100vh-72px)] w-full overflow-hidden font-nav">
+      
       {/* ── Global Toast ─────────────────────────────────────────────────── */}
       {toast && (
         <div className={cn(
-          'fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl border shadow-2xl transition-all animate-in slide-in-from-top-4 duration-300',
+          'fixed top-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 border shadow-[0_0_30px_rgba(0,255,255,0.1)] transition-all animate-hud duration-300 font-orbitron text-[10px] tracking-[0.2em]',
           toast.type === 'success'
-            ? 'bg-emerald-950/90 border-emerald-500/30 text-emerald-300'
+            ? 'bg-cyan-950/90 border-cyan-500/30 text-cyan-400'
             : 'bg-zinc-900/90 border-white/10 text-zinc-300'
-        )}>
+        )}
+        style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)' }}>
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span className="text-xs font-bold">{toast.message}</span>
+          <span className="font-bold">{toast.message.toUpperCase()}</span>
         </div>
       )}
 
       {/* ── Improvement Reminder ─────────────────────────────────────────── */}
       {improvedReminder && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 rounded-2xl border border-primary/30 bg-primary/10 shadow-[0_0_30px_rgba(255,214,0,0.15)] animate-in slide-in-from-bottom-4 duration-300">
-          <TrendingUp className="w-4 h-4 text-primary shrink-0" />
-          <span className="text-xs font-bold text-primary">Your resume improved — don&apos;t forget to save or download!</span>
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 px-6 py-4 border border-cyan-500/30 bg-cyan-500/10 shadow-[0_0_30px_rgba(0,255,255,0.2)] animate-hud duration-300 font-orbitron text-[10px] tracking-widest text-cyan-400"
+        style={{ clipPath: 'polygon(5% 0, 100% 0, 95% 100%, 0 100%)' }}>
+          <TrendingUp className="w-4 h-4 shrink-0" />
+          <span className="font-bold">INTEGRITY_INCREASE_DETECTED // SAVE_DRAFT_RECOMMENDED</span>
         </div>
       )}
 
       {/* ── Main Editor Area ─────────────────────────────────────────────── */}
-      <div className="flex flex-1 gap-5 overflow-hidden px-6 pt-4">
+      <div className="flex flex-1 gap-6 overflow-hidden px-8 pt-6">
 
         {/* LEFT: Editor — 70% */}
-        <div className="flex-[7] flex flex-col bg-zinc-950 rounded-3xl border border-white/5 overflow-hidden">
+        <div className="flex-[7] flex flex-col hud-panel overflow-hidden relative">
+          <div className="scan-beam" />
           
           {/* Editor Header */}
-          <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-zinc-900/80 shrink-0">
-            <div className="flex items-center gap-3">
-              <Edit3 className="w-4 h-4 text-primary" />
-              <span className="text-sm font-bold text-white">Resume Editor</span>
-              <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest hidden sm:block">
-                · Optimizes content, not formatting or design
-              </span>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/10 bg-cyan-500/5 shrink-0 font-orbitron">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 border border-cyan-500/30 flex items-center justify-center">
+                 <Edit3 className="w-4 h-4 text-cyan-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-cyan-500/40 uppercase tracking-[0.3em]">Hardware_Module</span>
+                <span className="text-sm font-bold text-white tracking-widest">RESUME_CORE_v1.0</span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {isAnalyzing && (
-                <span className="flex items-center gap-1.5 text-[10px] text-zinc-400 animate-pulse">
-                  <Search className="w-3 h-3 animate-spin" />
-                  Analyzing…
+                <span className="flex items-center gap-2 text-[10px] text-cyan-500/60 font-tech tracking-[0.2em] animate-pulse">
+                  <span className="w-3 h-3 animate-spin border-2 border-cyan-500 border-t-transparent rounded-none" />
+                  ANALYZING_SEMANTICS...
                 </span>
               )}
               <button
                 onClick={() => setShowHeatmap(v => !v)}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all',
+                  'flex items-center gap-2 px-4 py-2 border transition-all text-[10px] font-bold uppercase tracking-[0.2em]',
                   showHeatmap
-                    ? 'bg-primary/15 border-primary/30 text-primary'
-                    : 'bg-zinc-800 border-white/5 text-zinc-500 hover:text-white'
+                    ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.1)]'
+                    : 'bg-black/40 border-cyan-500/10 text-cyan-500/40 hover:text-cyan-400'
                 )}
+                style={{ clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0 100%, 0 35%)' }}
               >
                 <Zap className="w-3 h-3" />
                 Heatmap
@@ -211,7 +217,7 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
             <div
               ref={overlayRef}
               aria-hidden="true"
-              className="absolute inset-0 px-7 py-6 text-sm leading-7 whitespace-pre-wrap break-words pointer-events-none select-none font-mono text-transparent overflow-auto scrollbar-hide z-0"
+              className="absolute inset-0 px-8 py-8 text-sm leading-8 whitespace-pre-wrap break-words pointer-events-none select-none font-tech text-transparent overflow-auto custom-scrollbar z-0"
             >
               {renderHeatmap()}
             </div>
@@ -223,17 +229,17 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
               onChange={handleChange}
               onScroll={handleScroll}
               spellCheck={false}
-              placeholder={hasEdited ? '' : 'Paste or type your resume here…'}
-              className="absolute inset-0 w-full h-full bg-transparent px-7 py-6 text-sm leading-7 text-zinc-300 focus:outline-none resize-none font-mono border-none z-10 selection:bg-primary/30"
+              placeholder={hasEdited ? '' : '>>> INJECT_RESUME_DATA_HERE...'}
+              className="absolute inset-0 w-full h-full bg-transparent px-8 py-8 text-sm leading-8 text-cyan-50 focus:outline-none resize-none font-tech border-none z-10 selection:bg-cyan-500/30 placeholder:text-cyan-500/20"
             />
 
             {/* Empty state hint */}
             {!hasEdited && (
-              <div className="absolute bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800/80 border border-white/5">
-                  <Sparkles className="w-3.5 h-3.5 text-primary/60" />
-                  <span className="text-[11px] text-zinc-500 font-medium">
-                    Start editing your resume to see real-time improvements
+              <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none z-20">
+                <div className="flex items-center gap-3 px-6 py-3 border border-cyan-500/10 bg-black/60 backdrop-blur-sm">
+                  <Sparkles className="w-4 h-4 text-cyan-500/60 animate-pulse" />
+                  <span className="text-[10px] text-cyan-500/40 font-orbitron uppercase tracking-[0.3em]">
+                    Awaiting content verification signals...
                   </span>
                 </div>
               </div>
@@ -244,51 +250,54 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
         {/* RIGHT: Analytics — 30% */}
         <div
           className={cn(
-            'flex-[3] flex flex-col gap-4 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 transition-all duration-300',
+            'flex-[3] flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar transition-all duration-300',
             !showAnalytics && 'hidden'
           )}
         >
           {/* Analytics toggle label */}
           <button
             onClick={() => setShowAnalytics(false)}
-            className="flex items-center justify-end gap-1.5 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors font-mono uppercase tracking-widest"
+            className="flex items-center justify-end gap-2 text-[9px] text-cyan-500/30 hover:text-cyan-400 transition-colors font-orbitron uppercase tracking-[0.4em]"
           >
-            <EyeOff className="w-3 h-3" /> Hide Insights
+            <EyeOff className="w-3 h-3" /> [ minimize_intel ]
           </button>
 
           {/* Live Score */}
-          <div className="bg-zinc-900/70 rounded-3xl p-5 border border-white/5 relative">
-            <div className="absolute top-3 right-3">
+          <div className="hud-panel p-6 relative group overflow-hidden">
+            <div className="absolute top-4 right-4 z-10">
               <ScoreDeltaBadge newScore={score} delta={delta} />
             </div>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Live JD Score</p>
-            <div className="flex items-end gap-2 mb-3">
-              <span className="text-4xl font-bebas font-black text-white">{score}</span>
-              <span className="text-xs text-zinc-600 mb-1 font-mono">/ 100</span>
+            <p className="text-[10px] font-orbitron font-bold text-cyan-500/40 uppercase tracking-[0.4em] mb-4">LIVE_MATCH_COEFFICIENT</p>
+            <div className="flex items-end gap-3 mb-4">
+              <span className="text-5xl font-orbitron font-black text-cyan-400 drop-shadow-[0_0_15px_rgba(0,255,255,0.3)]">{score}</span>
+              <span className="text-sm text-cyan-500/30 mb-2 font-tech tracking-widest">/ 100%</span>
             </div>
-            <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+            <div className="w-full bg-cyan-900/20 h-1 relative overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-primary to-amber-400 transition-all duration-1000"
+                className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(0,255,255,0.8)] transition-all duration-1000"
                 style={{ width: `${score}%` }}
               />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[scan-move_2s_linear_infinite]" />
             </div>
           </div>
 
           {/* Readiness */}
-          <ReadinessScoreCard readiness={readiness} label={readinessLabel} />
+          <ReadinessScoreCard readiness={readiness} label={readinessLabel.toUpperCase()} />
 
           {/* Improvement Feed */}
           {delta !== 0 && (
-            <ImprovementFeedPanel
-              improvements={[{
-                type: 'score',
-                description: delta > 0
-                  ? `Score improved by ${delta} points`
-                  : `Score dropped by ${Math.abs(delta)} points`,
-                impact: delta
-              }]}
-              totalImprovement={delta}
-            />
+            <div className="animate-hud">
+              <ImprovementFeedPanel
+                improvements={[{
+                  type: 'score',
+                  description: delta > 0
+                    ? `Integrity alignment increased by ${delta}%`
+                    : `Neural mismatch detected: -${Math.abs(delta)}%`,
+                  impact: delta
+                }]}
+                totalImprovement={delta}
+              />
+            </div>
           )}
         </div>
 
@@ -305,31 +314,36 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
       </div>
 
       {/* ── Sticky Action Bar ─────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-4 px-6 py-4 border-t border-white/5 bg-zinc-950/90 backdrop-blur-md">
+      <div className="shrink-0 flex items-center justify-between gap-6 px-10 py-6 border-t border-cyan-500/10 bg-[#0c0c0e]/80 backdrop-blur-xl relative z-20 font-orbitron">
         
         {/* Left: disclaimer */}
-        <div className="hidden md:flex items-center gap-2 text-[10px] text-zinc-600 font-mono">
-          <Info className="w-3 h-3 shrink-0" />
-          This editor optimizes content, not formatting or design
+        <div className="hidden lg:flex items-center gap-3 text-[9px] text-cyan-500/40 font-tech uppercase tracking-[0.2em]">
+          <div className="w-4 h-4 border border-cyan-500/20 flex items-center justify-center">
+            <Info className="w-2.5 h-2.5" />
+          </div>
+          System focuses on semantic payload optimization // Visual formatting disregarded
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-4 ml-auto">
           <button
             onClick={handleSaveDraft}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-zinc-800 border border-white/5 text-white text-xs font-bold hover:bg-zinc-700 hover:border-white/10 transition-all"
+            className="flex items-center gap-3 px-8 py-3 bg-black/40 border border-cyan-500/20 text-cyan-500 text-[10px] font-bold tracking-[0.2em] hover:bg-cyan-500/10 hover:text-cyan-400 transition-all"
+            style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)' }}
           >
             <Save className="w-3.5 h-3.5" />
-            Save Draft
+            SAVE_DRAFT
           </button>
 
           <button
             onClick={handleDownload}
             disabled={!resumeText.trim() || isAnalyzing}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-black text-xs font-black hover:brightness-110 active:scale-95 transition-all shadow-[0_6px_20px_rgba(255,214,0,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="tactical-button px-10 py-3"
           >
-            <Download className="w-3.5 h-3.5" />
-            Download PDF
+            <span className="flex items-center gap-3">
+              <Download className="w-3.5 h-3.5" />
+              EXTRACT_PDF
+            </span>
           </button>
 
           <button
@@ -337,10 +351,10 @@ export default function LiveEditor({ initialText, initialScore, jdText, onExit }
               if (onExit) onExit();
               else window.location.href = '/resume';
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-zinc-400 text-xs font-bold hover:text-white hover:border-white/20 transition-all"
+            className="flex items-center justify-center w-12 h-12 border border-red-500/20 text-red-500/40 hover:text-red-500 hover:bg-red-500/5 transition-all"
+            style={{ clipPath: 'polygon(20% 0, 80% 0, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0 80%, 0 20%)' }}
           >
-            <X className="w-3.5 h-3.5" />
-            Exit
+            <X className="w-5 h-5" />
           </button>
         </div>
       </div>

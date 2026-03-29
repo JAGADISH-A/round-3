@@ -8,16 +8,23 @@ module.exports = {
     extend: {
       fontFamily: {
         bebas: ["Bebas Neue", "display"],
-        mono: ["IBM Plex Mono", "monospace"],
+        orbitron: ["var(--font-orbitron)", "sans-serif"],
+        nav: ["var(--font-rajdhani)", "sans-serif"],
+        tech: ["var(--font-tech-mono)", "monospace"],
+        mono: ["var(--font-tech-mono)", "monospace"],
       },
       colors: {
         primary: {
-          DEFAULT: "#FFD600",
-          foreground: "#000000",
+          DEFAULT: "#00FFFF",
+          foreground: "#020406",
         },
         secondary: {
-          DEFAULT: "#000000",
-          foreground: "#FFD600",
+          DEFAULT: "#020406",
+          foreground: "#00FFFF",
+        },
+        cyan: {
+          neon: "#00FFFF",
+          glow: "rgba(0, 255, 255, 0.4)",
         },
         bumblebee: {
           yellow: "#FFD600",
@@ -37,3 +44,4 @@ module.exports = {
   },
   plugins: [],
 };
+

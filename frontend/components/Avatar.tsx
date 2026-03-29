@@ -206,19 +206,62 @@ const Avatar = forwardRef<AvatarRef, AvatarProps>(
     }, [scheduleBlink, blinkInput]);
 
     return (
-      <div className="flex flex-col items-center w-full">
-        <div className={`avatar-wrapper ${SIZE_CLASSES[size]}`}>
+      <div className="flex flex-col items-center w-full max-w-2xl mx-auto px-4">
+        {/* ── Diagnostic HUD Frame ── */}
+        <div className="hud-panel animate-hud w-full p-8 relative overflow-hidden group">
+          {/* Subtle Scan Beam Overlay */}
+          <div className="scan-beam" />
           
-          {/* ── Glow Aura ── */}
-          <div className={`avatar-glow avatar-glow--${state}`} />
+          {/* HUD Status Header */}
+          <div className="flex justify-between items-center mb-6 font-tech px-2">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-cyan-500/50 uppercase tracking-tighter">System Diagnostic</span>
+              <span className="text-sm text-cyan-400 tracking-widest font-bold">CORE_HEARTBEAT</span>
+            </div>
+            <div className="flex flex-col text-right">
+              <span className="text-[10px] text-cyan-500/50 uppercase tracking-tighter">Node ID</span>
+              <span className="text-xs text-cyan-400 font-bold opacity-80">0x4F4A - BUZZ</span>
+            </div>
+          </div>
 
-          {/* ── Speaking Ripple Ring ── */}
-          <div className={`avatar-ring avatar-ring--${state}`} />
+          <div className="relative flex justify-center items-center py-4">
+            {/* HUD Corner Accents */}
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-500/40" />
+            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-500/40" />
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-500/40" />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-500/40" />
 
-          {/* ── Rive Canvas ── */}
-          <RiveComponent
-            className={`avatar-canvas avatar-canvas--${state} w-full h-full object-contain`}
-          />
+            <div className={`avatar-wrapper ${SIZE_CLASSES[size]} relative transition-transform duration-700 group-hover:scale-105`}>
+              {/* ── Glow Aura ── */}
+              <div className={`avatar-glow avatar-glow--${state}`} />
+
+              {/* ── Speaking Ripple Ring ── */}
+              <div className={`avatar-ring avatar-ring--${state}`} />
+
+              {/* ── Rive Canvas ── */}
+              <RiveComponent
+                className={`avatar-canvas avatar-canvas--${state} w-full h-full object-contain relative z-10`}
+              />
+            </div>
+          </div>
+
+          {/* HUD Status Footer */}
+          <div className="mt-8 grid grid-cols-2 gap-4 px-2 font-tech">
+            <div className="border border-cyan-500/10 bg-cyan-500/5 p-2 transition-all group-hover:bg-cyan-500/10">
+              <p className="text-[9px] text-cyan-500/60 uppercase">Agent Process</p>
+              <div className="flex items-center gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full ${state !== 'idle' ? 'bg-cyan-500 animate-pulse shadow-[0_0_8px_rgba(0,255,255,0.8)]' : 'bg-zinc-700'}`} />
+                <p className="text-[11px] text-cyan-400 uppercase font-bold tracking-widest">{state}</p>
+              </div>
+            </div>
+            <div className="border border-cyan-500/10 bg-cyan-500/5 p-2 transition-all group-hover:bg-cyan-500/10 text-right">
+              <p className="text-[9px] text-cyan-500/60 uppercase">System Integrity</p>
+              <p className="text-[11px] text-cyan-400 uppercase font-bold tracking-widest">NOMINAL</p>
+            </div>
+          </div>
+          
+          {/* Aesthetic Bracket Lines */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-1/3 h-[1px] bg-cyan-500/20" />
         </div>
       </div>
     );
