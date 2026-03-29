@@ -1,16 +1,28 @@
-# --- OS Files ---
+# ═══════════════════════════════════════════════════════════════════════════════
+# BumbleBee AI — .gitignore
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ─── Environment & Secrets (CRITICAL) ─────────────────────────────────────────
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# ─── OS Files ─────────────────────────────────────────────────────────────────
 .DS_Store
-**/ .DS_Store
+**/.DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 *.swp
+*.swo
 *.bak
 *.tmp
 *.log
-*.wav
-*.mp3
-*.ogg
 
-# --- IDE Files ---
+# ─── IDE / Editor ─────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.sublime-project
@@ -21,10 +33,12 @@ Thumbs.db
 .factorypath
 .history/
 *.launch
-*.tmp
-*.bak
 
-# --- Node/Next.js (Frontend) ---
+# ─── AI Agent Config (local dev tooling — not part of app source) ─────────────
+.agent/
+.gemini/
+
+# ─── Node.js / Next.js  (frontend/) ──────────────────────────────────────────
 node_modules/
 **/node_modules/
 .next/
@@ -32,69 +46,84 @@ node_modules/
 out/
 build/
 dist/
+.turbo/
+.vercel/
 tsconfig.tsbuildinfo
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+**/tsconfig.tsbuildinfo
 .npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# --- Java/Maven (Backend Gateway) ---
-target/
-**/target/
-bin/
-**/bin/
-.settings/
-.project
-.classpath
-.factorypath
-
-# --- Python (AI Services) ---
+# ─── Python  (ai-service/) ───────────────────────────────────────────────────
 __pycache__/
 **/__pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+*.cover
 .venv/
 **/venv/
 venv/
 env/
 virtualenv/
+*.egg-info/
+*.egg
+.installed.cfg
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ChromaDB / vector stores
 chroma_db/
 **/chroma_db/
-dataset/
-pip_list*.txt
-.ipynb_checkpoints/
 
-# --- Project Specific ---
-*.log
-**/*.log
-bot_*.log
+# Datasets (large files — keep only README/schema)
+dataset/
+**/dataset/
+careerspark_data_external/
+
+# ─── Java / Maven  (backend/) ────────────────────────────────────────────────
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# ─── Audio / Media (generated at runtime) ────────────────────────────────────
+*.wav
+*.mp3
+*.ogg
+*.flac
+
+# ─── Temp / Scratch Files ────────────────────────────────────────────────────
+tmp/
+**/tmp/
+temp_*/
 verify_output.txt
 verify_*.py
 test_*.wav
-temp_*/
-tmp/
-**/tmp/
+trace_imports.py
+test_normalization.py
+pip_list*.txt
 tmp_strings.txt
+.ipynb_checkpoints/
 
-# --- Environment Files ---
-.env
-.env.*
-**/.env
-**/.env.*
-! .env.example
-
-# --- Compiled/Generated ---
-*.class
+# ─── Compiled / Generated ────────────────────────────────────────────────────
 *.pyc
 *.pyo
 *.pyd
-.Python
-env/
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -104,7 +133,3 @@ parts/
 sdist/
 var/
 wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-

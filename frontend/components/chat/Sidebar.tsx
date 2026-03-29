@@ -15,7 +15,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   Globe,
-  Mic
+  Mic,
+  Sword
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -37,8 +38,9 @@ export default function Sidebar() {
   const menuItems = [
     { icon: MessageSquare, label: t.sidebar.chat, href: "/chat" },
     { icon: FileText, label: t.sidebar.resume_analyzer || "Resume Analyzer", href: "/resume" },
-    { icon: Video, label: t.sidebar.voice, href: "/voice" },
+    { icon: Video, label: t.sidebar.voice || "Voice Lab", href: "/voice" },
     { icon: Mic, label: t.sidebar.interview || "Interview", href: "/interview" },
+    { icon: Sword, label: "Arena Mode", href: "/coach" },
     { icon: BookOpen, label: t.sidebar.study_hub || "Study Hub", href: "/study", placeholder: true },
     { icon: Map, label: t.sidebar.roadmap, href: "/roadmap", placeholder: true },
   ];
@@ -67,7 +69,7 @@ export default function Sidebar() {
           <div className="relative w-10 h-10 flex-shrink-0 border border-cyan-500/30 p-1">
             <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-cyan-500" />
             <div className="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-cyan-500" />
-            <Image src="/logo.png" alt="BumbleBee Logo" fill className="object-contain opacity-80" />
+            <Image src="/logo.png" alt="BumbleBee Logo" fill sizes="40px" className="object-contain opacity-80" />
           </div>
           {!isCollapsed && (
             <span className="text-xl font-orbitron tracking-[0.3em] text-cyan-400 whitespace-nowrap">

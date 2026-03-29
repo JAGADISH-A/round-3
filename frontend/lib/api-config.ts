@@ -23,4 +23,6 @@ export const ENDPOINTS = {
   DEVELOPER_REPORT: `${API_BASE_URL}/developer-report`,
   VISION_ANALYZE: `${VISION_BASE_URL}/vision/analyze`,
   VISION_FEEDBACK: `${API_BASE_URL}/ai/vision-feedback`,
+  COACH_SCENARIOS: `${API_BASE_URL}/api/coach/scenarios`,
+  COACH_ANALYZE: `${API_BASE_URL}/api/coach/analyze`,
 };

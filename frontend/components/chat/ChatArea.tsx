@@ -601,11 +601,14 @@ function ChatContent({
             <p className="text-zinc-600 text-[10px] font-medium text-center py-8">No sessions yet.</p>
           )}
           {conversations.map((conv: any) => (
-            <button
+            <div
               key={conv.id}
               onClick={() => switchConversation(conv)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && switchConversation(conv)}
               className={cn(
-                "w-full text-left px-3 py-3 rounded-xl transition-all group flex items-start justify-between gap-2 border-l-2",
+                "w-full text-left px-3 py-3 rounded-xl transition-all group flex items-start justify-between gap-2 border-l-2 cursor-pointer",
                 conv.id === activeId
                   ? "bg-cyan-500/10 border-cyan-500 shadow-[0_0_20px_rgba(0,255,255,0.1)]"
                   : "hover:bg-white/5 border-transparent opacity-60 hover:opacity-100"
@@ -629,7 +632,7 @@ function ChatContent({
               >
                 <Trash2 className="w-3 h-3" />
               </button>
-            </button>
+            </div>
           ))}
         </div>
       </div>

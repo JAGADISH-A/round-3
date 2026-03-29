@@ -5,7 +5,7 @@ import Avatar, { AvatarRef, AvatarState } from "@/components/Avatar";
 import StatusPill from "@/components/StatusPill";
 import SetupPanel, { Role, Difficulty, FocusArea } from "@/components/SetupPanel";
 import { useVoiceState } from "@/hooks/useVoiceState";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useLanguage } from "@/context/LanguageContext";
@@ -31,8 +31,6 @@ export default function InterviewProductPage() {
   const avatarRef = useRef<AvatarRef>(null);
 
   const voice = useVoiceState({
-    apiKey:      process.env.NEXT_PUBLIC_VAPI_API_KEY      || "",
-    assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || "",
     role,
     difficulty,
     focusArea,
@@ -126,12 +124,35 @@ export default function InterviewProductPage() {
             <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] pointer-events-none" />
 
             <div className="relative z-10 flex flex-col items-center w-full">
-              <div key={selectedCoach.id} className="animate-in fade-in zoom-in-95 duration-500 drop-shadow-[0_0_30px_rgba(0,255,255,0.1)]">
-                <Avatar ref={avatarRef} src={selectedCoach.file} state={avatarState} size="xl" />
-              </div>
-              <div className="mt-12 scale-110">
-                <StatusPill status={voice.state === "connecting" ? "thinking" : voice.state} />
-              </div>
+              {voice.isExhausted ? (
+                <div className="text-center p-8 bg-red-500/10 border border-red-500/30 rounded-xl backdrop-blur-md animate-in fade-in zoom-in duration-300">
+                  <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Zap className="w-8 h-8 text-red-500" />
+                  </div>
+                  <h3 className="text-xl font-orbitron font-bold text-red-500 mb-2 uppercase tracking-tight">Neural Link Exhausted</h3>
+                  <p className="text-white/60 text-xs mb-6 max-w-xs mx-auto">All 5 redundancy nodes are currently unavailable. Please check your network or reset the cluster.</p>
+                  <button 
+                    onClick={() => voice.resetCluster()}
+                    className="px-6 py-2 bg-red-500 text-white font-orbitron text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors rounded-sm"
+                  >
+                    Resync Link
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div key={selectedCoach.id} className="animate-in fade-in zoom-in-95 duration-500 drop-shadow-[0_0_30px_rgba(0,255,255,0.1)]">
+                    <Avatar ref={avatarRef} src={selectedCoach.file} state={avatarState} size="xl" />
+                  </div>
+                  <div className="mt-12 scale-110">
+                    <StatusPill status={voice.state === "connecting" ? "thinking" : voice.state} />
+                    {voice.state !== 'idle' && (
+                      <div className="mt-2 text-[8px] font-orbitron text-cyan-500/40 text-center uppercase tracking-widest">
+                        Node_0{voice.activeNode}_Active
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Decorative HUD Elements */}
