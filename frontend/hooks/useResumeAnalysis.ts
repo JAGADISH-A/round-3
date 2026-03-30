@@ -1,38 +1,10 @@
 import { useState, useRef, useCallback } from "react";
 import { useResumeStore } from "../store/useResumeStore";
+import { ResumeAnalysis, JdMatch } from "../types/resume";
+export type { ResumeAnalysis, JdMatch };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-export interface JdMatch {
-  jd_match_score: number;
-  match_label: string;
-  benchmark_range?: string;
-  matched_keywords: string[];
-  missing_keywords: string[];
-  matched_with_labels?: { keyword: string; label: string }[];
-  missing_with_labels?: { keyword: string; label: string }[];
-  tech_matched_count: number;
-  tech_required_count: number;
-  action_insights?: { skill: string; type: string; message: string }[];
-  suggested_bullets?: string[];
-}
-
-export interface ResumeAnalysis {
-  full_text: string;
-  inferred_role: string;
-  confirmed_role?: string;
-  skills: string[];
-  education: { degree: string; institution: string; year: string }[];
-  experience: { title: string; company: string; duration: string; impact: string }[];
-  projects: { name: string; tech_stack: string[]; description: string }[];
-  ats_score: number;
-  strength_score: number;
-  industry_readiness: string;
-  skill_gap: string[];
-  keyword_suggestions: string[];
-  improvement_checklist: { task: string; priority: string }[];
-  experience_impact_score: number;
-  jd_match?: JdMatch | null;
-}
+// Using global types from @/types/resume
 
 // ─── Scoring constants ────────────────────────────────────────────────────────
 const ACTION_VERBS = new Set([

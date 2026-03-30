@@ -25,4 +25,9 @@ export const ENDPOINTS = {
   VISION_FEEDBACK: `${API_BASE_URL}/ai/vision-feedback`,
   COACH_SCENARIOS: `${API_BASE_URL}/api/coach/scenarios`,
   COACH_ANALYZE: `${API_BASE_URL}/api/coach/analyze`,
+  ENGLISH_LESSON: `${API_BASE_URL}/api/english/lesson`,
+  ENGLISH_QUIZ: `${API_BASE_URL}/api/english/quiz`,
+  ENGLISH_WRITING_PROMPT: `${API_BASE_URL}/api/english/writing-prompt`,
+  ENGLISH_EVALUATE: `${API_BASE_URL}/api/english/evaluate-writing`,
+  ENGLISH_SCAFFOLD: `${API_BASE_URL}/api/english/scaffold`,
 };

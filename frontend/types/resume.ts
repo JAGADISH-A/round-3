@@ -44,6 +44,7 @@ export interface ResumeAnalysis {
   improvement_checklist: { task: string; priority: string }[];
   experience_impact_score: number;
   readiness_score?: number;
+  career_goal?: string;
   target_role?: string;
   jd_match?: JdMatch | null;
   semantic_score?: number;

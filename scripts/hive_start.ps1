@@ -65,7 +65,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd ai-service\int
 
 # Frontend (3002)
 Write-Host " -> Next.js Frontend (3002)" -ForegroundColor Gray
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd frontend; npm run dev" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd frontend; npm run dev -- -p 3002" -WindowStyle Normal
 
 Write-Host "`n[INFO] Waiting 45s for full initialization..." -ForegroundColor Gray
 Start-Sleep -Seconds 45

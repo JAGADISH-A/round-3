@@ -11,6 +11,7 @@ import FirstImprovementModal from "@/components/resume/FirstImprovementModal";
 import { useImprovementTracker } from "@/hooks/useImprovementTracker";
 import { useScoreFeedback } from "@/hooks/useScoreFeedback";
 import { useResumeAnalysis } from "@/hooks/useResumeAnalysis";
+import { ResumeAnalysis } from "@/types/resume";
 import { useResumeStore } from "@/store/useResumeStore";
 import LiveResumeEditor from "@/components/resume/LiveEditor";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
@@ -252,8 +253,9 @@ export default function ResumePage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in zoom-in-95 duration-500 h-full">
                   <div className="lg:col-span-12 h-[calc(100vh-160px)]">
                     <LiveResumeEditor 
-                      initialData={normalizedAnalysis.full_text} 
-                      onAnalysisUpdate={handleAnalysisComplete}
+                      initialText={normalizedAnalysis.full_text} 
+                      initialScore={normalizedAnalysis.jd_match?.jd_match_score}
+                      jdText={jdText}
                     />
                   </div>
                 </div>
@@ -346,7 +348,7 @@ export default function ResumePage() {
                             <CheckCircle2 className="w-4 h-4" /> {t.resume.jd_match.matched_kws}
                           </h4>
                           <div className="flex flex-wrap gap-2">
-                            {normalizedAnalysis.jd_match.matched_keywords.map((word, i) => (
+                            {normalizedAnalysis.jd_match.matched_keywords.map((word: string, i: number) => (
                               <div key={i} className={cn("px-2.5 py-1 text-[10px] font-tech border transition-all duration-700 uppercase tracking-tighter", lastImpact?.newlyMatched.includes(word) ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)] scale-105" : "bg-emerald-500/5 border-emerald-500/10 text-emerald-300/60")}>{word}</div>
                             ))}
                           </div>
@@ -356,7 +358,7 @@ export default function ResumePage() {
                             <AlertCircle className="w-4 h-4" /> {t.resume.jd_match.gap_injection}
                           </h4>
                           <div className="flex flex-wrap gap-2">
-                            {(normalizedAnalysis.jd_match.missing_with_labels || normalizedAnalysis.jd_match.missing_keywords.map(k => ({ keyword: k, label: t.resume.insights.critical }))).map((item: any, i: number) => (
+                            {(normalizedAnalysis.jd_match.missing_with_labels || normalizedAnalysis.jd_match.missing_keywords.map((k: string) => ({ keyword: k, label: t.resume.insights.critical }))).map((item: any, i: number) => (
                               <button key={i} onClick={() => handleSkillClick(item.keyword || item)} className="px-3 py-1.5 bg-red-500/5 border border-red-500/20 text-[10px] text-red-300/40 font-tech uppercase tracking-tighter hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-300 transition-all cursor-pointer">{item.keyword || item}</button>
                             ))}
                           </div>

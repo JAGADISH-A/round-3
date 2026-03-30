@@ -43,6 +43,14 @@ from app.api.resume import router as resume_router
 from app.api.coach import router as coach_router
 from app.services.tts_service import sanitize_for_tts
 
+from app.services.english_service import (
+    get_english_lesson, 
+    get_english_quiz, 
+    get_writing_prompt, 
+    evaluate_writing,
+    get_writing_scaffold
+)
+
 app = FastAPI(title="BumbleBee AI Intelligence", version="1.0.0")
 
 # Standardized CORS for BumbleBee AI Hive
@@ -235,6 +243,62 @@ def career_roadmap(request: RoadmapRequest):
         from app.services.roadmap_generator import generate_personalized_roadmap
         result = generate_personalized_roadmap(request.role, user_skills, lang=request.lang)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class EnglishLessonRequest(BaseModel):
+    topic: str
+    lang: str = "en"
+
+class EnglishQuizRequest(BaseModel):
+    category: str
+    difficulty: str = "intermediate"
+    lang: str = "en"
+
+class WritingPromptRequest(BaseModel):
+    prompt_type: str = "email"
+    context: str = "general"
+
+class WritingEvaluationRequest(BaseModel):
+    user_text: str
+    scenario: str
+
+@app.post("/api/english/lesson")
+def english_lesson(request: EnglishLessonRequest):
+    try:
+        return get_english_lesson(request.topic, request.lang)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/english/quiz")
+def english_quiz(request: EnglishQuizRequest):
+    try:
+        return get_english_quiz(request.category, request.difficulty, request.lang)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/english/writing-prompt")
+def english_writing_prompt(request: WritingPromptRequest):
+    try:
+        return get_writing_prompt(request.prompt_type, request.context)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/english/evaluate-writing")
+def english_evaluate_writing(request: WritingEvaluationRequest):
+    try:
+        return evaluate_writing(request.user_text, request.scenario)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class WritingScaffoldRequest(BaseModel):
+    prompt_type: str
+    scenario: str
+
+@app.post("/api/english/scaffold")
+def english_writing_scaffold(request: WritingScaffoldRequest):
+    try:
+        return get_writing_scaffold(request.prompt_type, request.scenario)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

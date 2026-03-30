@@ -118,15 +118,11 @@ export default function InterviewAnalyzer() {
       chatHistory.current.push({ role: "assistant", content: data.next_question });
       
       setVoiceState("speaking");
-      
-      // Unified TTS Gating
-      ttsController.onEnd(() => {
-        if (step === "active") {
-          startListening();
-        }
-      });
-      
       await speak(data.next_question, lang as "en" | "ta");
+      
+      if (step === "active") {
+        startListening();
+      }
     } catch (err) {
       console.error("AI Response error:", err);
       setVoiceState("idle");

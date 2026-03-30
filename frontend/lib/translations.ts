@@ -3,7 +3,7 @@ export const translations: Record<string, any> = {
     sidebar: {
       dashboard: "Dashboard",
       chat: "Chat",
-      voice: "Voice Lab",
+      voice: "Practice Arena",
       roadmap: "Roadmap",
       prep: "Interview Prep",
       resume_analyzer: "Resume Analyzer",
@@ -215,6 +215,40 @@ export const translations: Record<string, any> = {
         after: "After",
         comparison: "Before → After"
       }
+    },
+    arena: {
+      title: "PRACTICE_ARENA",
+      subtitle: "Master professional English with AI-powered drills.",
+      modes: {
+        learn: "Deep_Learn",
+        test: "Quick_Test",
+        writing: "Write_Pro",
+        speaking: "Voice_Sync"
+      },
+      learn: {
+        placeholder: "Select a topic to begin neural hydration...",
+        topics: [
+          { key: "tenses", label: "Tenses (New)" },
+          { key: "verbs", label: "Verbs" },
+          { key: "adverbs", label: "Adverbs" },
+          { key: "nouns", label: "Nouns" },
+          { key: "prepositions", label: "Prepositions" }
+        ]
+      },
+      test: {
+        types: {
+          jumbled: "Jumbled Words",
+          missing: "Missing Words",
+          buzzwords: "Corporate Buzz",
+          proverbs: "Proverbs"
+        }
+      },
+      writing: {
+        types: {
+          email: "Email Composition",
+          letter: "Formal Letter"
+        }
+      }
     }
   },
   ta: {
@@ -222,7 +256,7 @@ export const translations: Record<string, any> = {
       dashboard: "டாஷ்போர்டு",
       chat: "அரட்டை",
       resume_analyzer: "சுயவிவரம் பகுப்பாய்வு",
-      voice: "குரல் கூடம்",
+      voice: "பயிற்சி அரங்கம்",
       interview: "நேர்முகத் தேர்வு",
       study_hub: "படிப்பு மையம்",
       roadmap: "பாதை வரைபடம்",
@@ -432,6 +466,40 @@ export const translations: Record<string, any> = {
         before: "முன்பு",
         after: "பின்பு",
         comparison: "முன்பு → பின்பு"
+      }
+    },
+    arena: {
+      title: "பயிற்சி_அரங்கம்",
+      subtitle: "AI-இயங்கும் பயிற்சிகள் மூலம் தொழில்முறை ஆங்கிலத்தில் தேர்ச்சி பெறுங்கள்.",
+      modes: {
+        learn: "ஆழமான_கற்றல்",
+        test: "விரைவான_தேர்வு",
+        writing: "எழுத்துப்_பயிற்சி",
+        speaking: "குரல்_ஒத்திசைவு"
+      },
+      learn: {
+        placeholder: "கற்றலைத் தொடங்க ஒரு தலைப்பைத் தேர்ந்தெடுக்கவும்...",
+        topics: [
+          { key: "tenses", label: "காலங்கள் (Tenses - New)" },
+          { key: "verbs", label: "வினைகள்" },
+          { key: "adverbs", label: "வினையுரிச்சொற்கள்" },
+          { key: "nouns", label: "பெயர்ச்சொற்கள்" },
+          { key: "prepositions", label: "முன்னிடைச்சொற்கள்" }
+        ]
+      },
+      test: {
+        types: {
+          jumbled: "கலைந்த சொற்கள்",
+          missing: "விடுபட்ட சொற்கள்",
+          buzzwords: "நிறுவனச் சொற்கள்",
+          proverbs: "பழமொழிகள்"
+        }
+      },
+      writing: {
+        types: {
+          email: "மின்னஞ்சல் உருவாக்கம்",
+          letter: "முறைசார் கடிதம்"
+        }
       }
     }
   }

@@ -38,10 +38,9 @@ export default function Sidebar() {
   const menuItems = [
     { icon: MessageSquare, label: t.sidebar.chat, href: "/chat" },
     { icon: FileText, label: t.sidebar.resume_analyzer || "Resume Analyzer", href: "/resume" },
-    { icon: Video, label: t.sidebar.voice || "Voice Lab", href: "/voice" },
+    { icon: Sword, label: t.sidebar.voice || "Practice Arena", href: "/arena" },
     { icon: Mic, label: t.sidebar.interview || "Interview", href: "/interview" },
-    { icon: Sword, label: "Arena Mode", href: "/coach" },
-    { icon: BookOpen, label: t.sidebar.study_hub || "Study Hub", href: "/study", placeholder: true },
+    { icon: BookOpen, label: t.sidebar.study_hub || "Study Hub", href: "/study" },
     { icon: Map, label: t.sidebar.roadmap, href: "/roadmap", placeholder: true },
   ];
 

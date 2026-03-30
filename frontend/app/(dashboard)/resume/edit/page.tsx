@@ -6,6 +6,7 @@ import { useResumeStore } from '@/store/useResumeStore';
 import LiveEditor from '@/components/resume/LiveEditor';
 import { ChevronLeft, Zap, Terminal } from 'lucide-react';
 
+export default function ResumeEditPage() {
   const { analysis, _hasHydrated } = useResumeStore();
 
   if (!_hasHydrated) {
