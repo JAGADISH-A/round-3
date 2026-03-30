@@ -124,12 +124,12 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         byte_array = await voice_file.download_as_bytearray()
         audio_stream = bytes(byte_array)
         
-        # 2. [STT] (5s)
+        # 2. [STT] (15s)
         try:
             logger.info("[STT] processing")
             user_text = await asyncio.wait_for(
                 stt_service.transcribe(audio_stream, "voice.ogg"),
-                timeout=5.0
+                timeout=15.0
             )
             # [STT] result
             logger.info(f"[STT] result: {user_text}")
@@ -142,34 +142,43 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("I couldn't understand the audio. Please try again.")
             return
 
-        # 3. [LLM] (6s)
+        # 3. [LLM] (20s)
         ai_response = ""
+        status_msg = await update.message.reply_text("🤖 *Processing request...*", parse_mode='Markdown')
         try:
             if InterviewEngine.is_interview_mode(user_id):
                 interaction_data = await asyncio.wait_for(
                     asyncio.to_thread(InterviewEngine.process_interaction, user_id, user_text),
-                    timeout=6.0
+                    timeout=20.0
                 )
                 ai_response = interaction_data.get("next_text", "Let's move on.")
                 eval_data = interaction_data.get("evaluation", {})
-                await update.message.reply_text(f"📊 *Score: {eval_data.get('score', 5)}/10*\n\n{ai_response}", parse_mode='Markdown')
+                await status_msg.edit_text(f"📊 *Score: {eval_data.get('score', 5)}/10*\n\n{ai_response}", parse_mode='Markdown')
             else:
-                ai_response = await asyncio.wait_for(generate_response_async(user_text), timeout=6.0)
-                await update.message.reply_text(ai_response)
+                ai_response = await asyncio.wait_for(generate_response_async(user_text), timeout=20.0)
+                await status_msg.edit_text(ai_response)
             
             logger.info(f"[LLM] {ai_response}")
         except asyncio.TimeoutError:
             logger.warning("[LLM] timeout")
-            await update.message.reply_text("Thinking took too long.")
+            await status_msg.edit_text("Thinking took too long.")
             return
 
-        # 4. [TTS] (5s)
+        # 4. [TTS] (30s)
         try:
+            # Inform user that synthesis is happening to manage expectations for the longer wait
+            synth_feedback = await update.message.reply_text("🎙️ *Synthesizing response...*")
             await update.message.reply_chat_action(action="record_voice")
-            audio_path = await asyncio.wait_for(tts_service.generate_tts(ai_response, lang="en"), timeout=5.0)
+            audio_path = await asyncio.wait_for(tts_service.generate_tts(ai_response, lang="en"), timeout=30.0)
+            await synth_feedback.delete()
             logger.info("[TTS] generated")
         except asyncio.TimeoutError:
             logger.warning("[TTS] timeout")
+            if 'synth_feedback' in locals(): await synth_feedback.delete()
+            return
+        except Exception as tts_err:
+            logger.error(f"[TTS] error: {tts_err}")
+            if 'synth_feedback' in locals(): await synth_feedback.delete()
             return
 
         # 5. [REPLY]

@@ -90,6 +90,9 @@ def build_system_prompt(persona_id: str, tone_id: str = "friendly", analysis_con
     
     sections.append("\nBEHAVIOR RULES\n" + "\n".join(UNIVERSAL_RULES))
     
+    # Inject Tool Usage Rules
+    sections.append(TOOL_INSTRUCTIONS)
+    
     # Inject TTS Speech Rules
     sections.append(TTS_SPEECH_RULES)
     
